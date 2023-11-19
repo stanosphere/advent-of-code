@@ -19,7 +19,7 @@ output
 *.metals/
 *.bloop/
 out/
-*/fixtures/*
+fixtures/
 
 .stack-work/
 *~
