@@ -12,7 +12,10 @@ import Data.List.Split (chunksOf, splitOn)
 import Data.Map qualified as M
   ( Map,
     empty,
+    filter,
     fromList,
+    map,
+    null,
     toList,
     unionWith,
   )
@@ -36,6 +39,7 @@ data DateTime = DateTime
   }
   deriving (Show, Ord, Eq)
 
+-- I think the code would be less of a disgrace if i used a more precise type for shigt here
 type Shift = [Event]
 
 data ShiftSummary = SS
@@ -53,8 +57,27 @@ part1 = do
   print guardWithMostminutesAsleep
   print res
 
+part2 :: IO ()
+part2 = do
+  rawInput <- getLines "./fixtures/input4.txt"
+  print
+    . ( maximumOn (snd . snd)
+          . M.toList
+          . M.map (maximumOn snd . M.toList)
+          . M.filter (not . M.null)
+          . groupMapReduce guardIdForShift shiftToMinutesAsleep (M.unionWith (+))
+      )
+    . toShifts
+    . sortOn time
+    . map parseEvent
+    $ rawInput
+
+guardIdForShift :: Shift -> String
+guardIdForShift ((Event (BeginsShift guardId) _) : _) = guardId
+guardIdForShift _ = undefined
+
 getShiftsForGuard :: String -> [Shift] -> [Shift]
-getShiftsForGuard guadId = filter (\((Event (BeginsShift guardId') _) : _) -> guadId == guardId')
+getShiftsForGuard guadId = filter (\s -> guadId == guardIdForShift s)
 
 getMinuteMostAsleep :: [Shift] -> M.Map Int Int
 getMinuteMostAsleep = foldl (M.unionWith (+)) M.empty . map shiftToMinutesAsleep
@@ -96,6 +119,13 @@ toShifts = reverse . map reverse . foldl folder []
     folder t (Event (BeginsShift guard) time) = [Event (BeginsShift guard) time] : t
     folder (h : t) event = (event : h) : t
 
+groupMapReduce :: Ord k => (a -> k) -> (a -> v) -> (v -> v -> v) -> [a] -> M.Map k v
+groupMapReduce keyBy mapBy combine =
+  M.fromList
+    . map (\xs -> (keyBy . head $ xs, foldl1 combine . map mapBy $ xs))
+    . groupBy ((==) `on` keyBy)
+    . sortOn keyBy
+
 -- parsing
 parseEvent :: String -> Event
 parseEvent s =
@@ -118,13 +148,6 @@ parseEventType s =
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
-
-groupMapReduce :: Ord k => (a -> k) -> (a -> v) -> (v -> v -> v) -> [a] -> M.Map k v
-groupMapReduce kf vf vvf =
-  M.fromList
-    . map (\xs -> (kf . head $ xs, foldl1 vvf . map vf $ xs))
-    . groupBy ((==) `on` kf)
-    . sortOn kf
 
 toyInput :: [String]
 toyInput =
