@@ -18,3 +18,4 @@ Happy Haskelling my future self!
 ## TODO
 
 - Reading input is basically always the same so maybe only define it once
+- Are .cabal files usually gitignored???
