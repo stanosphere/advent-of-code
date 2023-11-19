@@ -1,9 +1,11 @@
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use tuple-section" #-}
 
 module Day4 where
 
-import Data.Foldable
-import Data.Function
+import Data.Function (on)
 import Data.List (groupBy, sortOn)
 import Data.List.Extra (maximumOn)
 import Data.List.Split (chunksOf, splitOn)
@@ -46,19 +48,16 @@ part1 :: IO ()
 part1 = do
   rawInput <- getLines "./fixtures/input4.txt"
   let shifts = toShifts . sortOn time . map parseEvent $ rawInput
-  let summaries = map getShiftSummary shifts
-  let guardWithMostminutesAsleep = fst . getGuardWithMostTimeAsleep $ summaries
-  let relevantShifts = getShiftsForGuard guardWithMostminutesAsleep shifts
-  let res = getMinuteMostAsleep relevantShifts
-  let res' = maximumOn snd . M.toList $ res
+  let guardWithMostminutesAsleep = fst . getGuardWithMostTimeAsleep . map getShiftSummary $ shifts
+  let res = maximumOn snd . M.toList . getMinuteMostAsleep . getShiftsForGuard guardWithMostminutesAsleep $ shifts
   print guardWithMostminutesAsleep
-  print res'
+  print res
 
 getShiftsForGuard :: String -> [Shift] -> [Shift]
 getShiftsForGuard guadId = filter (\((Event (BeginsShift guardId') _) : _) -> guadId == guardId')
 
 getMinuteMostAsleep :: [Shift] -> M.Map Int Int
-getMinuteMostAsleep = foldl (M.unionWith (+)) (M.empty) . map shiftToMinutesAsleep
+getMinuteMostAsleep = foldl (M.unionWith (+)) M.empty . map shiftToMinutesAsleep
 
 shiftToMinutesAsleep :: Shift -> M.Map Int Int
 shiftToMinutesAsleep (_ : xs) =
