@@ -13,7 +13,7 @@ getMass :: Int -> Int
 getMass i = (i `div` 3) - 2
 
 getMassRec :: Int -> Int
-getMassRec x = go 0 x
+getMassRec = go 0
   where
     go :: Int -> Int -> Int
     go acc x = let m = getMass x in if m < 0 then acc else go (acc + m) m

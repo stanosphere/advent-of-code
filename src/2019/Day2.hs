@@ -12,6 +12,7 @@ import Data.Maybe
   ( catMaybes,
     isJust,
   )
+import Prelude hiding (init)
 
 data SystemState = SS
   { state :: Map Int Int,
