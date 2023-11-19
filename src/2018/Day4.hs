@@ -61,23 +61,26 @@ part2 :: IO ()
 part2 = do
   rawInput <- getLines "./fixtures/input4.txt"
   print
-    . ( maximumOn (snd . snd)
-          . M.toList
-          . M.map (maximumOn snd . M.toList)
-          . M.filter (not . M.null)
-          . groupMapReduce guardIdForShift shiftToMinutesAsleep (M.unionWith (+))
-      )
+    . guardMostFrequentlyAsleepInSameMinute
     . toShifts
     . sortOn time
     . map parseEvent
     $ rawInput
+
+guardMostFrequentlyAsleepInSameMinute :: [Shift] -> (String, (Int, Int))
+guardMostFrequentlyAsleepInSameMinute =
+  maximumOn (snd . snd)
+    . M.toList
+    . M.map (maximumOn snd . M.toList)
+    . M.filter (not . M.null)
+    . groupMapReduce guardIdForShift shiftToMinutesAsleep (M.unionWith (+))
 
 guardIdForShift :: Shift -> String
 guardIdForShift ((Event (BeginsShift guardId) _) : _) = guardId
 guardIdForShift _ = undefined
 
 getShiftsForGuard :: String -> [Shift] -> [Shift]
-getShiftsForGuard guadId = filter (\s -> guadId == guardIdForShift s)
+getShiftsForGuard guadId = filter ((== guadId) . guardIdForShift)
 
 getMinuteMostAsleep :: [Shift] -> M.Map Int Int
 getMinuteMostAsleep = foldl (M.unionWith (+)) M.empty . map shiftToMinutesAsleep
@@ -119,6 +122,7 @@ toShifts = reverse . map reverse . foldl folder []
     folder t (Event (BeginsShift guard) time) = [Event (BeginsShift guard) time] : t
     folder (h : t) event = (event : h) : t
 
+-- inspired by the scala function of the same name
 groupMapReduce :: Ord k => (a -> k) -> (a -> v) -> (v -> v -> v) -> [a] -> M.Map k v
 groupMapReduce keyBy mapBy combine =
   M.fromList
