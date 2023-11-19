@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
+
 module Day3 where
 
 import Data.Foldable (find)
@@ -30,6 +32,7 @@ data Rect = Rect
   }
   deriving (Show)
 
+-- for each sqaure who has claimed it?
 type Squares = M.Map Coords (S.Set String)
 
 part1 :: IO ()
@@ -69,14 +72,14 @@ parseRect :: String -> Rect
 parseRect s =
   let [id, rest] = splitOn " @ " s
       [xy, wh] = splitOn ": " rest
-      [x, y] = splitOn "," xy
+      [x0, y0] = splitOn "," xy
       [w, h] = splitOn "x" wh
-   in Rect id (read x) (read y) (read w) (read h)
+   in Rect id (read x0) (read y0) (read x0 + read w - 1) (read y0 + read h - 1)
 
 toSquares :: Rect -> Squares
-toSquares (Rect id x0 y0 width height) =
+toSquares (Rect id x0 y0 x1 y1) =
   M.fromList
     [ (Coords x y, S.singleton id)
-      | x <- [x0 .. (x0 + width - 1)],
-        y <- [y0 .. (y0 + height - 1)]
+      | x <- [x0 .. x1],
+        y <- [y0 .. y1]
     ]

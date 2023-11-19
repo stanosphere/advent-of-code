@@ -19,6 +19,7 @@ Happy Haskelling my future self!
 
 - Reading input is basically always the same so maybe only define it once
 - Are .cabal files usually gitignored???
+- I feel like there's a more idiomatic and/or better way for parsing than me just using `splitOn` ALL THE TIME lol
 - Historical: looks like some files might not be loadable until I sort out some problems...
   - `Control.Monad.Trans.State.Lazy` warning in 2022/Day5
   - `Text.Parsec` warning in 2022/Day13
