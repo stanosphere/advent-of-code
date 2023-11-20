@@ -36,7 +36,7 @@ data GridSize = GS
 type PointsByNodes = M.Map (Maybe NodeId) [(Point, Maybe NodeId)]
 
 -- real input is 50 coords on an infnite grid
--- answer is 3969
+-- answer is 3969, runs in 3.89 secs
 -- feel like I could have done this by sort of propegating out tendrils from each "node"
 -- also I can tidy this up a bit now that I know what part 2 look like
 part1 :: IO ()
@@ -118,7 +118,9 @@ groupBy' f =
 -- and 700 * 700 * 50 is 24,500,000 so that's quite a few iterations but nothing toooo bad I don't think
 -- also I'm going to assume the region is contiguous, IDK if it will be IRL!!!
 -- there MUST be a way of determining if a set of lattice points are contiguous though
--- answer is 42123
+---- I guess there's always the classic connected components approach that will work on any graph
+---- but I reckon there might be a nice way for a given metric (e.g. euclidian or manhatten)
+-- answer is 42123, runs in 13.56 secs
 part2 :: IO ()
 part2 = do
   inp <- getLines "./fixtures/input6.txt"
