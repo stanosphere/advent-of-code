@@ -7,6 +7,10 @@ Advent of code solutions written in Haskell.
 - do `stack ghci`
 - go to the place where your file is (e.g. `:cd src/2020/`)
 - load your file (e.g. `:l Day4`)
+- do `:set +s` so you can time your answers
+    - although this might just make you feel sad!
+    - Remember: "every problem has a solution that completes in at most 15 seconds on ten-year-old hardware"
+    - So if yours don't you're a slow boi
 - run your command (e.g. `part1`)
 - make sure you have your puzzle input under "fixtures"
     - I've been saving puzzle inputs in files like `input{dayNumber}.txt` in a `fixtures` folder for each year

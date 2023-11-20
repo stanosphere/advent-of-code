@@ -6,7 +6,6 @@
 -- I really should look up nice ways to do this on the reddit thread, or just think a bit harder!
 module Day6 where
 
-import Data.Foldable (traverse_)
 import Data.Function (on)
 import Data.List
   ( groupBy,
@@ -15,9 +14,9 @@ import Data.List
 import Data.List.Split (splitOn)
 import Data.Map qualified as M
   ( Map,
+    elems,
     filter,
     fromList,
-    toList,
   )
 
 data Point = P {x :: Int, y :: Int} deriving (Show)
@@ -47,9 +46,14 @@ part1 = do
   let grid = getGridSize nodePositions
   let nodes = zipWith (\i p -> N p (NodeId i)) [0 ..] nodePositions
   let allPoints = getAllRelevantPoints grid
-  let x = groupBy' snd . map (\p -> (p, findNearestNode nodes p)) $ allPoints
-  print grid
-  traverse_ print . map (\(k, v) -> (k, length v)) . (M.toList) . removeInfiniteSlices grid $ x
+  print
+    . maximum
+    . map length
+    . M.elems
+    . removeInfiniteSlices grid
+    . groupBy' snd
+    . map (\p -> (p, findNearestNode nodes p))
+    $ allPoints
 
 isInInfiniteSlice :: GridSize -> Point -> Bool
 isInInfiniteSlice (GS minX minY maxX maxY) (P x y) =
@@ -113,16 +117,15 @@ groupBy' f =
 -- means grid will be about 700 * 700
 -- and 700 * 700 * 50 is 24,500,000 so that's quite a few iterations but nothing toooo bad I don't think
 -- also I'm going to assume the region is contiguous, IDK if it will be IRL!!!
--- there MUST be a way of determining if a set of lttice points are contiguous though
+-- there MUST be a way of determining if a set of lattice points are contiguous though
+-- answer is 42123
 part2 :: IO ()
 part2 = do
   inp <- getLines "./fixtures/input6.txt"
   let nodePositions = map parsePoint inp
   let grid = getGridSize nodePositions
   let nodes = zipWith (\i p -> N p (NodeId i)) [0 ..] nodePositions
-  let allPoints = getAllRelevantPointsForPart2 grid
-  let x = filter (pointIsInRegion nodes) allPoints
-  print . length $ x
+  print . length . filter (pointIsInRegion nodes) . getAllRelevantPointsForPart2 $ grid
 
 -- probbaly shouldn't hardcode 10,000
 pointIsInRegion :: [Node] -> Point -> Bool
