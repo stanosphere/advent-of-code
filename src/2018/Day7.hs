@@ -1,4 +1,3 @@
--- I really should look up nice ways to do this on the reddit thread, or just think a bit harder!
 module Day7 where
 
 import Data.Foldable (find)
