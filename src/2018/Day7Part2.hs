@@ -39,11 +39,12 @@ data State = State
   }
   deriving (Show)
 
+-- 1072
 go :: IO ()
 go = do
-  inp <- getLines "./fixtures/input7Toy.txt"
+  inp <- getLines "./fixtures/input7.txt"
   let initState = State 0 (toTaskMap . map parseRelationship $ inp) [] []
-  let xs = take 20 . iterate step $ initState
+  let xs = take 1100 . iterate step $ initState
   traverse_ prettyPrint xs
   where
     prettyPrint :: State -> IO ()
@@ -98,11 +99,11 @@ advanceTasks i = map (\(StepWorkedOn c y) -> StepWorkedOn c (y - i))
 
 -- should be 5 in real puzzle
 numberOfWorkers :: Int
-numberOfWorkers = 2
+numberOfWorkers = 5
 
 -- should be 61 in real puzzle
 quickestTaskTime :: Int
-quickestTaskTime = 1
+quickestTaskTime = 61
 
 startTasks :: [Char] -> [StepWorkedOn] -> [StepWorkedOn]
 startTasks new current = map startTask new ++ current
