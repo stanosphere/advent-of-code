@@ -1,10 +1,9 @@
 module Day7Part2 where
 
-import Data.Foldable (find, traverse_)
+import Data.Foldable (find)
 import Data.Function (on)
 import Data.List
   ( groupBy,
-    sort,
     sortOn,
   )
 import Data.Map qualified as M
@@ -16,7 +15,6 @@ import Data.Map qualified as M
     keys,
     map,
     null,
-    size,
     union,
     (!),
   )
@@ -39,16 +37,20 @@ data State = State
   }
   deriving (Show)
 
+-- should be 5 in real puzzle
+numberOfWorkers :: Int
+numberOfWorkers = 5
+
+-- should be 61 in real puzzle
+quickestTaskTime :: Int
+quickestTaskTime = 61
+
 -- 1072
 go :: IO ()
 go = do
   inp <- getLines "./fixtures/input7.txt"
   let initState = State 0 (toTaskMap . map parseRelationship $ inp) [] []
-  let xs = take 1100 . iterate step $ initState
-  traverse_ prettyPrint xs
-  where
-    prettyPrint :: State -> IO ()
-    prettyPrint s = (print "---------------") *> (print . time $ s) *> (print . stepOrder $ s) *> (print . stepsWorkedOn $ s)
+  print . fmap ((+ (-1)) . time) . find (M.null . taskMap) . iterate step $ initState
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
@@ -68,6 +70,8 @@ getTasksWeCanDo es = M.fromSet (const []) (S.difference froms tos)
     froms = S.fromList . map from $ es
     tos = S.fromList . map to $ es
 
+-- I reckon we might as well jsut skip ahead until one of the steps is finished
+-- But the naive solution works perfectly well so there's no real reason to make this change
 step :: State -> State
 step (State time taskMap stepsWorkedOn stepOrder) =
   let time' = time + 1
@@ -80,13 +84,12 @@ step (State time taskMap stepsWorkedOn stepOrder) =
       stepOrder' = stepOrder ++ finishedTasks
    in State time' taskMap' stepsWorkedOn' stepOrder'
 
--- I reckon we might as well jsut skip ahead until one of the steps is finished
--- could try naive solution first though
-
 getTasksToStart :: [StepWorkedOn] -> TaskMap -> [Char]
-getTasksToStart alreadyInProgress taskMap =
-  let candidates = filter (\x -> not (any (\y -> stepId y == x) alreadyInProgress)) . M.keys . M.filter null $ taskMap
-   in take (numberOfWorkers - length alreadyInProgress) candidates
+getTasksToStart alreadyInProgress =
+  take (numberOfWorkers - length alreadyInProgress)
+    . filter (\cand -> not . any ((== cand) . stepId) $ alreadyInProgress)
+    . M.keys
+    . M.filter null
 
 findFinishedTasks :: [StepWorkedOn] -> [Char]
 findFinishedTasks = map stepId . filter ((== 0) . timeLeft)
@@ -97,22 +100,11 @@ removeFinishedTasks = filter ((/= 0) . timeLeft)
 advanceTasks :: Int -> [StepWorkedOn] -> [StepWorkedOn]
 advanceTasks i = map (\(StepWorkedOn c y) -> StepWorkedOn c (y - i))
 
--- should be 5 in real puzzle
-numberOfWorkers :: Int
-numberOfWorkers = 5
-
--- should be 61 in real puzzle
-quickestTaskTime :: Int
-quickestTaskTime = 61
-
 startTasks :: [Char] -> [StepWorkedOn] -> [StepWorkedOn]
 startTasks new current = map startTask new ++ current
   where
     taskTimeLookup = M.fromList (zip ['A' .. 'Z'] [quickestTaskTime ..])
     startTask c = StepWorkedOn c (taskTimeLookup M.! c)
-
-findTasksToStart :: Int -> TaskMap -> [Char]
-findTasksToStart availableWorkers = take availableWorkers . sort . M.keys . M.filter null
 
 handleFinishedTasks :: [Char] -> TaskMap -> TaskMap
 handleFinishedTasks xs tm = foldr handleFinishedTask tm xs
