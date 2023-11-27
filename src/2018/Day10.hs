@@ -32,7 +32,7 @@ part2 :: IO ()
 part2 = do
   inp <- fmap (map parseLine) . getLines $ "./fixtures/input10.txt"
   let states = take 30000 . iterate step $ inp
-  let positions = zip [0 ..] (map (map fst) states)
+  let positions = zip [(0 :: Int) ..] (map (map fst) states)
   let candidate = find (\(_, x) -> getGridArea x == 549) $ positions
   print candidate
 
