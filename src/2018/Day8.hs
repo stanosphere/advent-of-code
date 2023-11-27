@@ -33,7 +33,7 @@ sumTree' :: Tree -> Int
 sumTree' (Tree meta children) =
   if null children
     then sum meta
-    else sum . mapMaybe (fmap sumTree' . (children !?)) $ meta
+    else sum . mapMaybe (fmap sumTree' . (children !?) . (\x -> x - 1)) $ meta
 
 buildTree :: [Int] -> Tree
 buildTree xs = head . fst . parseTree $ ([], xs)
@@ -43,7 +43,7 @@ parseTree (parsedSoFar, childCount : metaCount : rest) =
   let (parsedChildren, afterChildren) = iterateN childCount parseTree ([], rest)
       (meta, afterMeta) = splitAt metaCount afterChildren
       newNode = Tree meta parsedChildren
-   in (newNode : parsedSoFar, afterMeta)
+   in (parsedSoFar ++ [newNode], afterMeta)
 
 iterateN :: Int -> (a -> a) -> a -> a
 iterateN n f a = iterate f a !! n
