@@ -26,21 +26,18 @@ getCalibration' s = read [intToDigit . head $ digits, intToDigit . last $ digits
 data State = State {chars :: String, foundDigits :: [Int]} deriving (Show)
 
 toDigits :: Foldable t => t Char -> [Int]
-toDigits = foundDigits . foldl f (State [] [])
+toDigits = foundDigits . foldr f (State [] [])
   where
-    f :: State -> Char -> State
-    f (State {chars, foundDigits}) char
-      | isDigit char = State [] (foundDigits ++ [digitToInt char])
+    f :: Char -> State -> State
+    f char (State {chars, foundDigits})
+      | isDigit char = State [] (digitToInt char : foundDigits)
       | length chars >= 2 = case maybeDigitString of
-          Just digit -> State chars' (foundDigits ++ [digit])
+          Just digit -> State chars' (digit : foundDigits)
           Nothing -> State chars' foundDigits
       | otherwise = State chars' foundDigits
       where
-        chars' = chars ++ [char]
-        maybeDigitString = listToMaybe . mapMaybe ((`lookup` digitStrings) . (`takeRight` chars')) $ [3, 4, 5]
-
-takeRight :: Int -> [a] -> [a]
-takeRight n = reverse . take n . reverse
+        chars' = char : chars
+        maybeDigitString = listToMaybe . mapMaybe ((`lookup` digitStrings) . (`take` chars')) $ [3, 4, 5]
 
 digitStrings :: Map String Int
 digitStrings = fromList (zip ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"] [1 ..])
