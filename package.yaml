@@ -23,6 +23,7 @@ dependencies:
   - split
   - containers
   - extra
+  - parsec
 
 ghc-options:
   - -Wall

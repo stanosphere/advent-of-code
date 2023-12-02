@@ -28,3 +28,10 @@ Happy Haskelling my future self!
   - `Control.Monad.Trans.State.Lazy` warning in 2022/Day5
   - `Text.Parsec` warning in 2022/Day13
   - `Data.Text` warning in 2021/Day4
+
+## Misc
+
+### Parsing
+
+- I started trying to use Pasec properly in Day 2 of 2023
+- I read (this)[https://jsdw.me/posts/haskell-parsec-basics/] for inspiration, was quite helpful!
