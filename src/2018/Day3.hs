@@ -20,7 +20,6 @@ import Data.Set qualified as S
   )
 import Text.Parsec qualified as P
 import Text.ParserCombinators.Parsec (Parser, parse)
-import Prelude hiding (id)
 
 data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)
 

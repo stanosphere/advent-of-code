@@ -1,14 +1,14 @@
+{-# HLINT ignore "Use tuple-section" #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
-{-# HLINT ignore "Use tuple-section" #-}
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
 module Day4 where
 
 import Data.Function (on)
 import Data.List (groupBy, sortOn)
 import Data.List.Extra (maximumOn)
-import Data.List.Split (chunksOf, splitOn)
+import Data.List.Split (chunksOf)
 import Data.Map qualified as M
   ( Map,
     empty,
@@ -19,9 +19,11 @@ import Data.Map qualified as M
     toList,
     unionWith,
   )
+import Text.Parsec qualified as P
+import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 
 -- use whatever Haskell's equivalent of value calss is for guard id?
-data EventType = FallsAsleep | WakesUp | BeginsShift String deriving (Show)
+data EventType = FallsAsleep | WakesUp | BeginsShift Int deriving (Show)
 
 data Event = Event
   { eventType :: EventType,
@@ -39,11 +41,11 @@ data DateTime = DateTime
   }
   deriving (Show, Ord, Eq)
 
--- I think the code would be less of a disgrace if i used a more precise type for shigt here
+-- I think the code would be less of a disgrace if i used a more precise type for shift here
 type Shift = [Event]
 
 data ShiftSummary = SS
-  { guardId :: String,
+  { guardId :: Int,
     timeAsleep :: Int
   }
   deriving (Show)
@@ -53,9 +55,8 @@ part1 = do
   rawInput <- getLines "./fixtures/input4.txt"
   let shifts = toShifts . sortOn time . map parseEvent $ rawInput
   let guardWithMostminutesAsleep = fst . getGuardWithMostTimeAsleep . map getShiftSummary $ shifts
-  let res = maximumOn snd . M.toList . getMinuteMostAsleep . getShiftsForGuard guardWithMostminutesAsleep $ shifts
-  print guardWithMostminutesAsleep
-  print res
+  let (minute, _) = maximumOn snd . M.toList . getMinuteMostAsleep . getShiftsForGuard guardWithMostminutesAsleep $ shifts
+  print (minute * guardWithMostminutesAsleep)
 
 part2 :: IO ()
 part2 = do
@@ -67,19 +68,22 @@ part2 = do
     . map parseEvent
     $ rawInput
 
-guardMostFrequentlyAsleepInSameMinute :: [Shift] -> (String, (Int, Int))
-guardMostFrequentlyAsleepInSameMinute =
-  maximumOn (snd . snd)
-    . M.toList
-    . M.map (maximumOn snd . M.toList)
-    . M.filter (not . M.null)
-    . groupMapReduce guardIdForShift shiftToMinutesAsleep (M.unionWith (+))
+guardMostFrequentlyAsleepInSameMinute :: [Shift] -> Int
+guardMostFrequentlyAsleepInSameMinute shifts = guardId * minute
+  where
+    (guardId, (minute, _)) =
+      maximumOn (snd . snd)
+        . M.toList
+        . M.map (maximumOn snd . M.toList)
+        . M.filter (not . M.null)
+        . groupMapReduce guardIdForShift shiftToMinutesAsleep (M.unionWith (+))
+        $ shifts
 
-guardIdForShift :: Shift -> String
+guardIdForShift :: Shift -> Int
 guardIdForShift ((Event (BeginsShift guardId) _) : _) = guardId
 guardIdForShift _ = undefined
 
-getShiftsForGuard :: String -> [Shift] -> [Shift]
+getShiftsForGuard :: Int -> [Shift] -> [Shift]
 getShiftsForGuard guadId = filter ((== guadId) . guardIdForShift)
 
 getMinuteMostAsleep :: [Shift] -> M.Map Int Int
@@ -94,11 +98,11 @@ shiftToMinutesAsleep (_ : xs) =
     $ xs
 shiftToMinutesAsleep _ = undefined
 
-getGuardWithMostTimeAsleep :: [ShiftSummary] -> (String, Int)
+getGuardWithMostTimeAsleep :: [ShiftSummary] -> (Int, Int)
 getGuardWithMostTimeAsleep = maximumOn snd . M.toList . timeSleptByEachGuard
 
 -- timeSleptByEachGuard :: [ShiftSummary] -> M.Map
-timeSleptByEachGuard :: [ShiftSummary] -> M.Map String Int
+timeSleptByEachGuard :: [ShiftSummary] -> M.Map Int Int
 timeSleptByEachGuard = groupMapReduce guardId timeAsleep (+)
 
 -- very assumption heavy function but whatever
@@ -132,26 +136,47 @@ groupMapReduce keyBy mapBy combine =
 
 -- parsing
 parseEvent :: String -> Event
-parseEvent s =
-  let [dateTime, eventType] = splitOn "] " s
-   in Event (parseEventType eventType) (parseDateTime . drop 1 $ dateTime)
-
-parseDateTime :: String -> DateTime
-parseDateTime s =
-  let [date, time] = splitOn " " s
-      [_, month, day] = splitOn "-" date
-      [hour, minute] = splitOn ":" time
-   in DateTime (read month) (read day) (read hour) (read minute)
-
-parseEventType :: String -> EventType
-parseEventType "falls asleep" = FallsAsleep
-parseEventType "wakes up" = WakesUp
-parseEventType s =
-  let [_, guardId, _, _] = splitOn " " s
-   in BeginsShift guardId
+parseEvent = unsafeParse eventParser
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
+
+-- parsing stuff
+unsafeParse :: Parser a -> String -> a
+unsafeParse p s = case parse p "still don't really know wht this arg is for lol" s of
+  Left res -> error . show $ res
+  Right res -> res
+
+eventParser :: Parser Event
+eventParser = do
+  dateTime <- dateTimeParser
+  P.spaces
+  eventType <- eventTypeParser
+  return (Event eventType dateTime)
+
+-- "[1518-11-01 00:00]""
+dateTimeParser :: Parser DateTime
+dateTimeParser = do
+  P.string "[1518-"
+  month <- intParser
+  P.char '-'
+  day <- intParser
+  P.space
+  hour <- intParser
+  P.char ':'
+  minute <- intParser
+  P.char ']'
+  return (DateTime month day hour minute)
+
+eventTypeParser :: Parser EventType
+eventTypeParser = fallsAsleepParser <|> wakesUpParse <|> beginsShiftParser
+  where
+    fallsAsleepParser = FallsAsleep <$ P.string "falls asleep"
+    wakesUpParse = WakesUp <$ P.string "wakes up"
+    beginsShiftParser = P.string "Guard #" *> (BeginsShift <$> intParser) <* P.string " begins shift"
+
+intParser :: Parser Int
+intParser = read <$> P.many1 P.digit
 
 toyInput :: [String]
 toyInput =
