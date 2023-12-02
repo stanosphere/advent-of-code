@@ -23,7 +23,7 @@ getCalibration' s = read [intToDigit . head $ digits, intToDigit . last $ digits
   where
     digits = toDigits s
 
-data State = State {chars :: String, foundDigits :: [Int]} deriving (Show)
+data State = State {chars :: String, foundDigits :: [Int]}
 
 toDigits :: Foldable t => t Char -> [Int]
 toDigits = foundDigits . foldr f (State [] [])
