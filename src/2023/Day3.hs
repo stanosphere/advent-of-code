@@ -76,10 +76,7 @@ data State = State {digits :: [Char], xPositions :: [Int], isComplete :: Bool} d
 
 -- don't really need the map for part1 but I suspect the symbols will mean something in part 2
 getSymbolCoords :: [String] -> SymbolMap
-getSymbolCoords inp =
-  M.fromList
-    . filter (isSymbol . snd)
-    $ [((x, y), c) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 ..] xs]
+getSymbolCoords inp = M.fromList [((x, y), c) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 ..] xs, isSymbol c]
   where
     isSymbol c = c /= '.' && (not . isDigit $ c)
 
