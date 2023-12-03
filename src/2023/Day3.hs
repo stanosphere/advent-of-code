@@ -74,14 +74,12 @@ getNumbers = concat . zipWith parseLine [0 ..]
 
 data State = State {digits :: [Char], xPositions :: [Int], isComplete :: Bool} deriving (Show)
 
--- might have been nicer as a list comp actually
 -- don't really need the map for part1 but I suspect the symbols will mean something in part 2
 getSymbolCoords :: [String] -> SymbolMap
-getSymbolCoords =
+getSymbolCoords inp =
   M.fromList
     . filter (isSymbol . snd)
-    . concat
-    . zipWith (\y xs -> zipWith (\x c -> ((x, y), c)) [0 ..] xs) [0 ..]
+    $ [((x, y), c) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 ..] xs]
   where
     isSymbol c = c /= '.' && (not . isDigit $ c)
 
