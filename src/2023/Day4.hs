@@ -1,7 +1,7 @@
 {-# HLINT ignore "Use <$>" #-}
 module Day4 where
 
-import Data.Foldable
+import Data.Foldable (find)
 import Data.Map qualified as M (Map, delete, elems, empty, filter, fromList, insert, keys, map, null, size, toList, (!))
 import Data.Set qualified as S (Set, fromList, intersection, size)
 import Text.Parsec qualified as P
