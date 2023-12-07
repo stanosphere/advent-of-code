@@ -7,6 +7,7 @@ module Day5 where
 
 import Control.Monad (join)
 import Data.Foldable (find)
+import Data.List.Split (chunksOf)
 import Data.Maybe (fromMaybe, isJust)
 import Text.Parsec qualified as P
 import Text.ParserCombinators.Parsec (Parser, parse)
@@ -19,6 +20,12 @@ part1 :: IO Int
 part1 = do
   rawInput <- readFile "./fixtures/input5.txt"
   let (Input seeds mappings) = unsafeParse inputParser rawInput
+  return . minimum . map ((snd . get) . (\seed -> getLocation mappings ("seed", seed))) $ seeds
+
+part2 :: IO Int
+part2 = do
+  rawInput <- readFile "./fixtures/input5.txt"
+  let (Input seeds mappings) = unsafeParse inputParser' rawInput
   return . minimum . map ((snd . get) . (\seed -> getLocation mappings ("seed", seed))) $ seeds
 
 getLocation :: [Mapping] -> (String, Int) -> Maybe (String, Int)
@@ -36,6 +43,20 @@ get (Just x) = x
 instance Show (Int -> Int) where
   show :: (Int -> Int) -> String
   show _ = "Int -> Int"
+
+inputParser' :: Parser Input
+inputParser' = do
+  seeds <- seedsParser'
+  P.newline
+  mappings <- P.endBy mappingParser P.spaces
+  return (Input seeds mappings)
+
+seedsParser' :: Parser [Int]
+seedsParser' = do
+  P.string "seeds: "
+  ints <- P.endBy intParser P.space
+  let xs = chunksOf 2 ints
+  return (concatMap (\[a, b] -> [a .. (a + b)]) xs)
 
 inputParser :: Parser Input
 inputParser = do
