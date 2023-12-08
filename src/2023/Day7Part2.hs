@@ -3,7 +3,7 @@
 module Day7Part2 where
 
 import Data.Foldable
-import Data.List
+import Data.List (nub, sort, sortOn)
 import Data.Map qualified as M (Map, alter, empty, toList)
 import Data.Ord (Down (Down))
 
@@ -27,32 +27,31 @@ data Hand
   deriving (Eq, Show, Ord)
 
 -- 249483956
+-- (0.20 secs, 133,285,240 bytes)
+solve :: IO Int
 solve = do
   xs <- getLines "./fixtures/input7.txt"
   return . sum . zipWith (\i (Bid _ _ money) -> i * money) [1 ..] . sort . map parseBid $ xs
 
 getBestSubstitution :: [Card] -> Hand
-getBestSubstitution cs =
-  let freqs = frequencies cs
-      jokerCount = fmap (snd) . find ((== Joker) . fst) $ freqs
-      res = case jokerCount of
-        Nothing -> parseHand' freqs
-        Just x -> getBestSub x cs
-   in res
-
-getBestSub :: Int -> [Card] -> Hand
-getBestSub count = maximum . map (parseHand' . frequencies) . getPossibleSubs count
-
-getPossibleSubs :: Int -> [Card] -> [[Card]]
-getPossibleSubs count cards =
-  let candidates = nub cards
-      res
-        | count == 1 = [[c] | c <- candidates]
-        | count == 2 = [[c1, c2] | c1 <- candidates, c2 <- candidates]
-        | count == 3 = [[c1, c2, c3] | c1 <- candidates, c2 <- candidates, c3 <- candidates]
-        | count == 4 = [replicate 5 (head candidates)]
-        | otherwise = [replicate 5 Ace]
-   in res
+getBestSubstitution cs = case jokerCount of
+  Nothing -> parseHand' freqs
+  Just x -> getBestSubForCount x (filter (/= Joker) cs)
+  where
+    jokerCount = fmap snd . find ((== Joker) . fst) $ freqs
+    freqs = frequencies cs
+    getBestSubForCount :: Int -> [Card] -> Hand
+    getBestSubForCount count = maximum . map (parseHand' . frequencies) . getPossibleSubs count
+    getPossibleSubs :: Int -> [Card] -> [[Card]]
+    getPossibleSubs count cards =
+      let candidates = nub cards
+          res
+            | count == 1 = [[c] | c <- candidates]
+            | count == 2 = [[c1, c2] | c1 <- candidates, c2 <- candidates]
+            | count == 3 = [[c1, c2, c3] | c1 <- candidates, c2 <- candidates, c3 <- candidates]
+            | count == 4 = [replicate 4 (head candidates)]
+            | otherwise = [replicate 5 Ace]
+       in map (++ cards) res
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
@@ -60,7 +59,7 @@ getLines filePath = fmap lines (readFile filePath)
 parseBid :: String -> Bid
 parseBid s = Bid (getBestSubstitution . map parseCard . take 5 $ s) (map parseCard . take 5 $ s) (read . drop 6 $ s)
 
-parseHand' :: (Eq a1, Num a1) => [(a2, a1)] -> Hand
+parseHand' :: [(a, Int)] -> Hand
 parseHand' [(_, 5)] = FiveOfAKind
 parseHand' [(_, 4), (_, 1)] = FourOfAKind
 parseHand' [(_, 3), (_, 2)] = FullHouse
