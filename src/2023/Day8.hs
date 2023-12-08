@@ -19,6 +19,9 @@ solvePart1 = do
 -- but really in order to use it you should show that the cycles really are synchronised...
 -- anyway I guess I'll just do that
 
+-- I guess more precisely one would need to show that the distance from the start node to the end node is always equal to the distance from the end node to itself
+-- which I can believe I would have discovered through playing around rather than naughtily looking at reddit
+
 -- 12315788159977
 -- 0.08 secs
 solvePart2 :: IO Integer
