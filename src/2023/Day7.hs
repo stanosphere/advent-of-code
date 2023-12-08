@@ -2,8 +2,7 @@
 
 module Day7 where
 
-import Data.Foldable
-import Data.List
+import Data.List (sort, sortOn)
 import Data.Map qualified as M (Map, alter, empty, toList)
 import Data.Ord (Down (Down))
 
@@ -22,7 +21,9 @@ data Hand
   deriving (Eq, Show, Ord)
 
 -- 249483956
-part1 = do
+-- 0.05 secs
+solve :: IO Int
+solve = do
   xs <- getLines "./fixtures/input7.txt"
   return . sum . zipWith (\i (Bid _ _ money) -> i * money) [1 ..] . sort . map parseBid $ xs
 
