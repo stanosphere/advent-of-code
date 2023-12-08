@@ -10,9 +10,9 @@ import Text.ParserCombinators.Parsec (Parser, parse)
 solve :: IO (Maybe (Integer, String))
 solve = do
   xs <- getLines "./fixtures/input8.txt"
-  let infinteSeq = concat . repeat . head $ xs
+  let infiniteSeq = concat . repeat . head $ xs
   let nodes = M.fromList . map (unsafeParse branchParser) . drop 2 $ xs
-  return . find ((== "ZZZ") . snd) . zip [0 ..] . go nodes $ infinteSeq
+  return . find ((== "ZZZ") . snd) . zip [0 ..] . go nodes $ infiniteSeq
 
 data Branch = Branch {left :: String, right :: String} deriving (Show)
 
