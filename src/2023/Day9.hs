@@ -1,12 +1,16 @@
 module Day9 where
 
-import Data.List
+import Data.List (tails)
 import Data.List.Split (splitOn)
 
-part1 = do
-  input <- getLines "./fixtures/input9.txt"
-  let xs = sum . map (getLastNum . parseLine) $ input
-  return xs
+part1 :: IO Int
+part1 = sum . map (getLastNum . parseLine) <$> inputLines
+
+part2 :: IO Int
+part2 = sum . map (getLastNum . reverse . parseLine) <$> inputLines
+
+inputLines :: IO [String]
+inputLines = getLines "./fixtures/input9.txt"
 
 parseLine :: String -> [Int]
 parseLine = map read . splitOn " "
