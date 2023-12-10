@@ -82,6 +82,11 @@ evolveState sm (State dir pos) = nextState dir (sm M.! pos) pos
 -- this is the bit that uses Jordan curve theorem
 -- could definitely do it more efficiently by choosing the shortest direction to the edge
 -- or actually probably by directly using the input lists and such
+-- also it's not obvious why the list I use is `['┐', '┌', '│']`!
+-- answer is I basically can't handle `'─'` tiles so I pretend that each square only exists as its lower half
+-- I could just as well have chosen the upper half or indeed done a similar thing in the y direction
+-- which ties in with one of my efficiency concerns a little
+-- I guess another you could do is like maintain a map of resolved coordinates, that way you'd only need to scan to the nearest resolved coordinate
 pointIsInsideCurve :: Curve -> Coords -> Bool
 pointIsInsideCurve cc (x0, y) =
   odd
