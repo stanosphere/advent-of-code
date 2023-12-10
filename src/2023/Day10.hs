@@ -1,9 +1,12 @@
 module Day10 where
 
 import Data.Foldable
-import Data.Map qualified as M (Map, findWithDefault, fromList, toList, (!))
+import Data.Map qualified as M (Map, findWithDefault, fromList, lookup, notMember, toList, (!))
+import Data.Maybe (mapMaybe)
 
 type SymbolMap = M.Map Coords Char
+
+type Curve = M.Map Coords Char
 
 type Coords = (Int, Int)
 
@@ -11,40 +14,8 @@ data Direction = N | E | S | W deriving (Show)
 
 data State = State {direction :: Direction, position :: Coords} deriving (Show)
 
--- so for part 2 I reckon we ca use the Jordan Curve Theorem
--- https://en.wikipedia.org/wiki/Jordan_curve_theorem
-
-evolveState :: SymbolMap -> State -> State
-evolveState sm (State dir pos) = nextState pos dir (sm M.! pos)
-
--- there are common patterns that one could extract out but I reckon case by case is fine!
--- for example if you end up facing west that's always associated with an x change of `-1` and similar for other directions
--- like you could have helpers called `moveSouth` etc if you wanted
-nextState :: Coords -> Direction -> Char -> State
-nextState (x, y) S '└' = State E (x + 1, y)
-nextState (x, y) W '└' = State N (x, y - 1)
-nextState (x, y) E '┘' = State N (x, y - 1)
-nextState (x, y) S '┘' = State W (x - 1, y)
-nextState (x, y) N '┐' = State W (x - 1, y)
-nextState (x, y) E '┐' = State S (x, y + 1)
-nextState (x, y) N '┌' = State E (x + 1, y)
-nextState (x, y) W '┌' = State S (x, y + 1)
-nextState (x, y) E '─' = State E (x + 1, y)
-nextState (x, y) W '─' = State W (x - 1, y)
-nextState (x, y) N '│' = State N (x, y - 1)
-nextState (x, y) S '│' = State S (x, y + 1)
-nextState _ _ _ = undefined
-
-getCurve :: IO SymbolMap
-getCurve = do
-  input <- getLines "./fixtures/input10.txt"
-  let symbols = getSymbolCoords input
-  let startingCoords = (24, 76)
-  let otherPoints = takeWhile ((/= startingCoords) . position) . iterate (evolveState symbols) $ State W (23, 76)
-  let curve = M.fromList (((24, 76), '┐') : map (\(State _ pos) -> (pos, symbols M.! pos)) otherPoints)
-  return curve
-
 -- 6842
+-- 0.09 secs (including drawing)
 part1 :: IO ()
 part1 = do
   input <- getLines "./fixtures/input10.txt"
@@ -59,9 +30,71 @@ part1 = do
   let answer = if odd (length res1) then length res1 `div` 2 + 1 else length res1 `div` 2
   print answer
 
+-- so for part 2 I reckon we ca use the Jordan Curve Theorem
+-- https://en.wikipedia.org/wiki/Jordan_curve_theorem
+-- maybe I should visualise this too
+-- but getting the answer using a weird maths thing is good enough for me
+-- 393
+-- (0.25 secs,)
+part2 :: IO Int
+part2 = do
+  curve <- getCurve
+  let pointsNotOnCurve = [(x, y) | x <- [0 .. 139], y <- [0 .. 139], M.notMember (x, y) curve]
+  let x = length . filter (pointIsInsideCurve curve) $ pointsNotOnCurve
+  return x
+
 -- (24,76)
 getStart :: SymbolMap -> Coords
 getStart = fst . get . find ((== 'S') . snd) . M.toList
+
+evolveState :: SymbolMap -> State -> State
+evolveState sm (State dir pos) = nextState pos dir (sm M.! pos)
+  where
+    -- there are common patterns that one could extract out but I reckon case by case is fine!
+    -- for example if you end up facing west that's always associated with an x change of `-1` and similar for other directions
+    -- like you could have helpers called `moveSouth` etc if you wanted
+    nextState :: Coords -> Direction -> Char -> State
+    nextState (x, y) S '└' = State E (x + 1, y)
+    nextState (x, y) W '└' = State N (x, y - 1)
+    nextState (x, y) E '┘' = State N (x, y - 1)
+    nextState (x, y) S '┘' = State W (x - 1, y)
+    nextState (x, y) N '┐' = State W (x - 1, y)
+    nextState (x, y) E '┐' = State S (x, y + 1)
+    nextState (x, y) N '┌' = State E (x + 1, y)
+    nextState (x, y) W '┌' = State S (x, y + 1)
+    nextState (x, y) E '─' = State E (x + 1, y)
+    nextState (x, y) W '─' = State W (x - 1, y)
+    nextState (x, y) N '│' = State N (x, y - 1)
+    nextState (x, y) S '│' = State S (x, y + 1)
+    nextState _ _ _ = undefined
+
+-- this is the bit that uses Jordan curve theorem
+-- could definitely do it more efficiently by choosing the shortest direction to the edge
+-- or actually probably by directly using the input lists and such
+pointIsInsideCurve :: Curve -> Coords -> Bool
+pointIsInsideCurve cc (x0, y) =
+  odd
+    . length
+    . filter (\char -> char `elem` ['┐', '┌', '│'])
+    . mapMaybe (\x -> M.lookup (x, y) cc)
+    $ [x0 + 1 .. 139]
+
+getCurve :: IO SymbolMap
+getCurve = do
+  input <- getLines "./fixtures/input10.txt"
+  let symbols = getSymbolCoords input
+  let startingCoords = (24, 76)
+  let statingPoint = (startingCoords, '┐')
+  let otherPoints =
+        map (\(State _ pos) -> (pos, symbols M.! pos))
+          . takeWhile ((/= startingCoords) . position)
+          . iterate (evolveState symbols)
+          $ State W (23, 76)
+  return . M.fromList $ (statingPoint : otherPoints)
+
+-- parsing
+getLines :: FilePath -> IO [String]
+getLines filePath = fmap lines (readFile filePath)
 
 getSymbolCoords :: [String] -> SymbolMap
 getSymbolCoords inp = M.fromList [((x, y), prettifySymbol c) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 ..] xs]
@@ -75,10 +108,14 @@ getSymbolCoords inp = M.fromList [((x, y), prettifySymbol c) | (y, xs) <- zip [0
     prettifySymbol '|' = '│'
     prettifySymbol '.' = ' '
     prettifySymbol 'S' = '┐'
+    prettifySymbol _ = undefined
 
-getLines :: FilePath -> IO [String]
-getLines filePath = fmap lines (readFile filePath)
+-- utils
+get :: Maybe a -> a
+get Nothing = undefined
+get (Just x) = x
 
+-- pretty printing
 prettyPrintSymbolMap :: Int -> SymbolMap -> IO ()
 prettyPrintSymbolMap size mp =
   let counter = [0 .. size]
@@ -88,7 +125,3 @@ prettyPrintCurve :: Int -> SymbolMap -> IO ()
 prettyPrintCurve size mp =
   let counter = [0 .. size]
    in traverse_ putStrLn [[M.findWithDefault ' ' (x, y) mp | x <- counter] | y <- counter]
-
-get :: Maybe a -> a
-get Nothing = undefined
-get (Just x) = x
