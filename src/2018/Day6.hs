@@ -6,18 +6,9 @@
 -- I really should look up nice ways to do this on the reddit thread, or just think a bit harder!
 module Day6 where
 
-import Data.Function (on)
-import Data.List
-  ( groupBy,
-    sortOn,
-  )
 import Data.List.Split (splitOn)
-import Data.Map qualified as M
-  ( Map,
-    elems,
-    filter,
-    fromList,
-  )
+import Data.Map qualified as M (Map, elems, filter)
+import Utils.Grouping (groupBy')
 
 data Point = P {x :: Int, y :: Int} deriving (Show)
 
@@ -104,16 +95,9 @@ findNearestNode nodes point =
 
 type State = ([Node], Int)
 
-groupBy' :: Ord k => (a -> k) -> [a] -> M.Map k [a]
-groupBy' f =
-  M.fromList
-    . map (\xs -> (f . head $ xs, xs))
-    . groupBy ((==) `on` f)
-    . sortOn f
-
 -- so for part 2 I reckon since 10,000 / 50 = 200
 -- I can use an upper bound where I go like a halo of 200 away from the extrema
--- which is like a bit annoying and definitely a massive overetimate
+-- which is like a bit annoying and definitely a massive overestimate
 -- means grid will be about 700 * 700
 -- and 700 * 700 * 50 is 24,500,000 so that's quite a few iterations but nothing toooo bad I don't think
 -- also I'm going to assume the region is contiguous, IDK if it will be IRL!!!

@@ -1,17 +1,12 @@
 module Day9 where
 
 import Data.Char (digitToInt)
-import Data.Foldable
-  ( find,
-  )
-import Data.Function (on)
-import Data.List
-  ( groupBy,
-    sortOn,
-  )
+import Data.Foldable (find)
+import Data.List (sortOn)
 import Data.Map qualified as M
 import Data.Maybe (mapMaybe)
 import Data.Set qualified as S
+import Utils.Grouping (groupBy')
 
 type Coords = (Int, Int)
 
@@ -42,7 +37,7 @@ part2 = do
           . sortOn ((* (-1)) . snd)
           . M.toList
           . M.map length
-          . scalaGroupBy (\(_, _, basin) -> basin)
+          . groupBy' (\(_, _, basin) -> basin)
           $ locationsWithBasins
   print blah
 
@@ -94,13 +89,6 @@ getAssociatedBasin grid basins (coords, height)
 getNextCoordsToLookAt :: Grid -> (Coords, Height) -> Maybe (Coords, Height)
 getNextCoordsToLookAt grid (coords, height) =
   find (\(_, adjH) -> adjH < height) (getAdjacentSquares' grid coords)
-
-scalaGroupBy :: Ord b => (a -> b) -> [a] -> M.Map b [a]
-scalaGroupBy f =
-  M.fromAscList
-    . map (\x -> (f . head $ x, x))
-    . groupBy ((==) `on` f)
-    . sortOn f
 
 -- ugly parsing stuff below here
 getLines :: FilePath -> IO [String]

@@ -1,17 +1,8 @@
 module Day16 where
 
-import Data.Function (on)
-import Data.List
-  ( groupBy,
-    partition,
-    sortOn,
-  )
+import Data.List (partition, sortOn)
 import Data.List.Split (splitOn)
-import Data.Map qualified as M
-  ( Map,
-    fromList,
-    (!),
-  )
+import Data.Map qualified as M (Map, (!))
 import Data.Set qualified as S
   ( Set,
     empty,
@@ -21,6 +12,7 @@ import Data.Set qualified as S
     toList,
     unions,
   )
+import Utils.Grouping (groupBy')
 
 data Edge = Edge
   { from :: String,
@@ -156,10 +148,3 @@ removeFinalEdge (Path edges score) = Path (tail edges) score
 isCyclic :: Path -> Bool
 isCyclic (Path edges _) =
   let h = to . head $ edges in any (\e -> from e == h) . tail $ edges
-
-groupBy' :: Ord k => (a -> k) -> [a] -> M.Map k [a]
-groupBy' f =
-  M.fromList
-    . map (\xs -> (f . head $ xs, xs))
-    . groupBy ((==) `on` f)
-    . sortOn f

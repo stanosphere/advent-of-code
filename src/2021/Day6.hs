@@ -1,8 +1,6 @@
 module Day6 where
 
 import Data.Char (digitToInt)
-import Data.Function (on)
-import Data.List (groupBy, sortOn)
 import Data.Map qualified as M
 
 type DaysBeforeBreeding = Int
@@ -11,7 +9,7 @@ type FishCount = Integer
 
 type FishSchool = M.Map DaysBeforeBreeding FishCount
 
--- naive implememntation
+-- naive implementation
 part1 :: IO ()
 part1 = do
   input <- getInput "./fixtures/input6.txt"
@@ -43,6 +41,7 @@ birthFish oldMap days fishCount =
         else M.insertWith (+) (days - 1) fishCount
     ageFish = M.insertWith (flip (-)) days fishCount
 
+-- feels rather like `iterate`
 applyN :: Int -> (a -> a) -> (a -> a)
 applyN 0 _ = id
 applyN n f = f . applyN (n - 1) f
@@ -61,9 +60,6 @@ inputToSchool = getFrequency
 
 getFrequency :: Ord a => [a] -> M.Map a Integer
 getFrequency = foldr (\x -> M.insertWith (+) x 1) M.empty
-
-scalaGroupBy :: Ord b => (a -> b) -> [a] -> M.Map b [a]
-scalaGroupBy f = M.fromAscList . map (\x -> (f . head $ x, x)) . groupBy ((==) `on` f) . sortOn f
 
 toyInput :: [Int]
 toyInput = [3, 4, 3, 1, 2]

@@ -1,11 +1,8 @@
-module Utils.Grouping (groupMap, groupMapReduce) where
+module Utils.Grouping (groupMap, groupMapReduce, groupBy') where
 
 import Data.Function (on)
 import Data.List (groupBy, sortOn)
-import Data.Map
-  ( Map,
-    fromList,
-  )
+import Data.Map (Map, fromList)
 
 -- inspired by scala function of the same name
 groupMap :: Ord k => (a -> k) -> (a -> v) -> [a] -> Map k [v]
@@ -23,4 +20,10 @@ groupMapReduce keyBy mapBy combine =
     . groupBy ((==) `on` keyBy)
     . sortOn keyBy
 
--- TODO add scala groupBy here
+-- this works like scala's groupBy in the sense that elements need not be adjacent in the original list to be grouped
+groupBy' :: Ord k => (a -> k) -> [a] -> Map k [a]
+groupBy' f =
+  fromList
+    . map (\xs -> (f . head $ xs, xs))
+    . groupBy ((==) `on` f)
+    . sortOn f

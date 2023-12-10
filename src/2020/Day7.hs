@@ -1,12 +1,11 @@
 module Day7 where
 
 import Data.Char (isDigit)
-import Data.Foldable ()
-import Data.Function (on)
-import Data.List (groupBy, nub, sortOn)
+import Data.List (nub)
 import Data.List.Split (splitOn)
-import Data.Map qualified as M (Map, fromAscList, lookup, map)
+import Data.Map qualified as M (Map, lookup, map)
 import Data.Maybe (mapMaybe)
+import Utils.Grouping (groupBy')
 
 part1 :: IO ()
 part1 = do
@@ -31,7 +30,7 @@ walk mp cands acc =
 
 -- map leading to parents
 mkParentMap :: [(String, String)] -> M.Map String [String]
-mkParentMap = M.map (map fst) . scalaGroupBy snd
+mkParentMap = M.map (map fst) . groupBy' snd
 
 -- map leading to children
 
@@ -66,9 +65,6 @@ dropRight n xs = take (length xs - n) xs
 
 takeRight :: Int -> [a] -> [a]
 takeRight n xs = drop (length xs - n) xs
-
-scalaGroupBy :: Ord b => (a -> b) -> [a] -> M.Map b [a]
-scalaGroupBy f = M.fromAscList . map (\x -> (f . head $ x, x)) . groupBy ((==) `on` f) . sortOn f
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
