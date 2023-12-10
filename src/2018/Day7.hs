@@ -1,16 +1,10 @@
 module Day7 where
 
 import Data.Foldable (find)
-import Data.Function (on)
-import Data.List
-  ( groupBy,
-    sortOn,
-  )
 import Data.Map qualified as M
   ( Map,
     delete,
     filter,
-    fromList,
     fromSet,
     keys,
     map,
@@ -21,6 +15,7 @@ import Data.Set qualified as S
   ( difference,
     fromList,
   )
+import Utils.Grouping (groupMap)
 
 data Edge = Edge {from :: Char, to :: Char} deriving (Show)
 
@@ -59,11 +54,3 @@ step (State taskMap stepOrder) = State taskMap' stepOrder'
     nextTaskToDo = minimum . M.keys . M.filter null $ taskMap
     taskMap' = M.map (filter (/= nextTaskToDo)) . M.delete nextTaskToDo $ taskMap
     stepOrder' = nextTaskToDo : stepOrder
-
--- inspired by scala function of the same name
-groupMap :: Ord k => (a -> k) -> (a -> v) -> [a] -> M.Map k [v]
-groupMap keyBy mapBy =
-  M.fromList
-    . map (\xs -> (keyBy . head $ xs, map mapBy xs))
-    . groupBy ((==) `on` keyBy)
-    . sortOn keyBy

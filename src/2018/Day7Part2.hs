@@ -1,11 +1,6 @@
 module Day7Part2 where
 
 import Data.Foldable (find)
-import Data.Function (on)
-import Data.List
-  ( groupBy,
-    sortOn,
-  )
 import Data.Map qualified as M
   ( Map,
     delete,
@@ -18,10 +13,8 @@ import Data.Map qualified as M
     union,
     (!),
   )
-import Data.Set qualified as S
-  ( difference,
-    fromList,
-  )
+import Data.Set qualified as S (difference, fromList)
+import Utils.Grouping (groupMap)
 
 data Edge = Edge {from :: Char, to :: Char} deriving (Show)
 
@@ -111,11 +104,3 @@ handleFinishedTasks xs tm = foldr handleFinishedTask tm xs
   where
     handleFinishedTask :: Char -> TaskMap -> TaskMap
     handleFinishedTask task = M.map (filter (/= task)) . M.delete task
-
--- inspired by scala function of the same name
-groupMap :: Ord k => (a -> k) -> (a -> v) -> [a] -> M.Map k [v]
-groupMap keyBy mapBy =
-  M.fromList
-    . map (\xs -> (keyBy . head $ xs, map mapBy xs))
-    . groupBy ((==) `on` keyBy)
-    . sortOn keyBy

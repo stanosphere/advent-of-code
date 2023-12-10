@@ -5,8 +5,7 @@
 
 module Day4 where
 
-import Data.Function (on)
-import Data.List (groupBy, sortOn)
+import Data.List (sortOn)
 import Data.List.Extra (maximumOn)
 import Data.List.Split (chunksOf)
 import Data.Map qualified as M
@@ -21,6 +20,7 @@ import Data.Map qualified as M
   )
 import Text.Parsec qualified as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
+import Utils.Grouping (groupMapReduce)
 
 -- use whatever Haskell's equivalent of value calss is for guard id?
 data EventType = FallsAsleep | WakesUp | BeginsShift Int deriving (Show)
@@ -125,14 +125,6 @@ toShifts = reverse . map reverse . foldl folder []
     folder [] event = [[event]]
     folder t (Event (BeginsShift guard) time) = [Event (BeginsShift guard) time] : t
     folder (h : t) event = (event : h) : t
-
--- inspired by the scala function of the same name
-groupMapReduce :: Ord k => (a -> k) -> (a -> v) -> (v -> v -> v) -> [a] -> M.Map k v
-groupMapReduce keyBy mapBy combine =
-  M.fromList
-    . map (\xs -> (keyBy . head $ xs, foldl1 combine . map mapBy $ xs))
-    . groupBy ((==) `on` keyBy)
-    . sortOn keyBy
 
 -- parsing
 parseEvent :: String -> Event

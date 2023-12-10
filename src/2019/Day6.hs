@@ -1,25 +1,11 @@
 module Day6 where
 
-import Data.Function (on)
-import Data.List
-  ( groupBy,
-    nub,
-    sortOn,
-    tails,
-  )
+import Data.List (nub, tails)
 import Data.List.Extra (splitOn)
-import Data.Map qualified as M
-  ( Map,
-    findWithDefault,
-    fromList,
-  )
-import Data.Set qualified as S
-  ( difference,
-    fromList,
-    size,
-    toList,
-  )
+import Data.Map qualified as M (Map, findWithDefault)
+import Data.Set qualified as S (difference, fromList, size, toList)
 import Data.Tree (Tree (Node), foldTree)
+import Utils.Grouping (groupMap)
 
 data Edge a = Edge {from :: a, to :: a} deriving (Show)
 
@@ -86,14 +72,6 @@ parseLine s =
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
-
--- inspired by scala function of the same name
-groupMap :: Ord k => (a -> k) -> (a -> v) -> [a] -> M.Map k [v]
-groupMap keyBy mapBy =
-  M.fromList
-    . map (\xs -> (keyBy . head $ xs, map mapBy xs))
-    . groupBy ((==) `on` keyBy)
-    . sortOn keyBy
 
 -- using the drawTree function for the toy input we get the below. it's rather cool
 {-

@@ -22,6 +22,8 @@ source-repository head
   location: https://github.com/stanosphere/advent-of-code
 
 library
+  exposed-modules:
+      Utils.Grouping
   other-modules:
       Paths_advent_of_code
   hs-source-dirs:

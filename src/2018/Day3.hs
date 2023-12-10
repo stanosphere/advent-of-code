@@ -72,9 +72,9 @@ parseRect :: String -> Rect
 parseRect = unsafeParse rectParser
 
 toSquares :: Rect -> Squares
-toSquares (Rect id x0 y0 x1 y1) =
+toSquares (Rect rectId x0 y0 x1 y1) =
   M.fromList
-    [ (Coords x y, S.singleton id)
+    [ (Coords x y, S.singleton rectId)
       | x <- [x0 .. x1],
         y <- [y0 .. y1]
     ]
