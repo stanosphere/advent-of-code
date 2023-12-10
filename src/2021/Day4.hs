@@ -1,8 +1,8 @@
 module Day4 where
 
 import Data.Foldable
-import Data.List (group, transpose)
-import Data.Text qualified as T
+import Data.List (transpose)
+import Data.List.Split (chunksOf, splitOn)
 
 type HasBeenCalled = Bool
 
@@ -54,16 +54,9 @@ nestedMap f = map (map f)
 
 hasWon :: Board -> Bool
 hasWon board = hasWinningRow board || hasWinningColumn board
-
-hasWinningRow :: Board -> Bool
-hasWinningRow = any (all snd)
-
-hasWinningColumn :: Board -> Bool
-hasWinningColumn = hasWinningRow . transpose
-
-chunk :: Int -> [a] -> [[a]]
-chunk _ [] = []
-chunk n xs = let (ys, zs) = splitAt n xs in ys : chunk n zs
+  where
+    hasWinningRow = any (all snd)
+    hasWinningColumn = hasWinningRow . transpose
 
 mkBoard :: [String] -> Board
 mkBoard = map (map (\x -> (read x :: Int, False)) . words)
@@ -72,10 +65,10 @@ getScoreForWinningBoard :: (Int, Board) -> Int
 getScoreForWinningBoard (finalNumberCalled, board) = finalNumberCalled * (sum . concat . nestedMap (\(x, hbc) -> if hbc then 0 else x) $ board)
 
 parseNumbersToCall :: [String] -> [Int]
-parseNumbersToCall = map (\t -> read t :: Int) . map T.unpack . T.splitOn (T.pack ",") . T.pack . head
+parseNumbersToCall = map (\t -> read t :: Int) . splitOn "," . head
 
 parseBingoBoards :: [String] -> [Board]
-parseBingoBoards = map mkBoard . map tail . chunk 6 . tail
+parseBingoBoards = map (mkBoard . tail) . chunksOf 6 . tail
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)

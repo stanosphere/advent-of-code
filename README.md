@@ -24,8 +24,7 @@ Happy Haskelling my future self!
 - Reading input is basically always the same so maybe only define it once
 - Are .cabal files usually gitignored???
 - I feel like there's a more idiomatic and/or better way for parsing than me just using `splitOn` ALL THE TIME lol
-- Historical: looks like some files might not be loadable until I sort out some problems...
-  - `Data.Text` warning in 2021/Day4
+
 
 ## Misc
 
@@ -33,3 +32,5 @@ Happy Haskelling my future self!
 
 - I started trying to use Pasec properly in Day 2 of 2023
 - I read (this)[https://jsdw.me/posts/haskell-parsec-basics/] for inspiration, was quite helpful!
+- I've gone back and parsecified some of the older solutions
+- But sometimes all you really need is `chunksOf` and `splitOn` and things like that so I usually leave those alone
