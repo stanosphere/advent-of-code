@@ -3,41 +3,20 @@ module Day13 where
 import Data.Foldable (traverse_)
 import Data.List (sort)
 import Data.List.Split (chunksOf)
-import Data.Maybe (mapMaybe)
-import Data.Ord (Ordering)
-import GHC.Data.Maybe (rightToMaybe)
-import Text.Parsec
+import Text.Parsec qualified as P
   ( char,
-    choice,
     digit,
     many1,
     parse,
     sepBy,
+    (<|>),
   )
 import Text.Parsec.String (Parser)
 
 data Tree = Value Int | List [Tree] deriving (Show, Eq)
 
-num :: Parser Int
-num = read <$> many1 digit
-
--- this parser is STOLEN
-tree :: Parser Tree
-tree =
-  ( choice
-      [Value <$> num, List <$> (char '[' *> sepBy tree (char ',') <* char ']')]
-  )
-
-parseTree :: String -> Maybe Tree
-parseTree = rightToMaybe . parse tree ""
-
-parseBothTrees :: (String, String) -> Maybe (Tree, Tree)
-parseBothTrees (s1, s2) = do
-  t1 <- parseTree s1
-  t2 <- parseTree s2
-  return (t1, t2)
-
 instance Ord Tree where
+  compare :: Tree -> Tree -> Ordering
   compare (Value x) (Value y) = compare x y
   compare (List xs) (List ys) = compare xs ys
   compare (Value x) (List ys) = compare (List [Value x]) (List ys)
@@ -45,35 +24,51 @@ instance Ord Tree where
 
 part1 :: IO ()
 part1 = do
-  lines <- getLines "./fixtures/input13.txt"
-  let xs =
-        traverse (\[x1, x2] -> parseBothTrees (x1, x2))
-          . map (take 2)
-          . chunksOf 3
-          $ lines
-  case xs of
-    Nothing -> print "oops"
-    Just ys -> print . countCorrectlyOrderedPairs $ ys
+  input <- getLines "./fixtures/input13.txt"
+  print
+    . countCorrectlyOrderedPairs
+    . map (\[x1, x2] -> parseBothTrees (x1, x2))
+    . map (take 2)
+    . chunksOf 3
+    $ input
 
 part2 :: IO ()
 part2 = do
-  lines <- getLines "./fixtures/input13.txt"
-  let xs = traverse (parseTree) . filter (\x -> x /= "") $ (lines)
-  case xs of
-    Nothing -> print "oops"
-    Just trees -> traverse_ print . findIndexes $ trees
+  input <- getLines "./fixtures/input13.txt"
+  traverse_ print . findIndexes . map parseTree . filter (/= "") $ input
 
 countCorrectlyOrderedPairs :: [(Tree, Tree)] -> Int
-countCorrectlyOrderedPairs =
-  sum . map fst . filter (\(i, (t1, t2)) -> compare t1 t2 == LT) . zip [1 ..]
+countCorrectlyOrderedPairs = sum . map fst . filter (\(_, (t1, t2)) -> t1 < t2) . zip [1 ..]
 
 findIndexes :: [Tree] -> [(Int, Tree)]
 findIndexes =
-  let additionalTrees = [List [List [Value 6]], List [List [Value 2]]]
-   in filter (\(i, tree) -> tree `elem` additionalTrees)
-        . zip [1 ..]
-        . sort
-        . (additionalTrees ++)
+  filter ((`elem` additionalTrees) . snd)
+    . zip [1 ..]
+    . sort
+    . (additionalTrees ++)
+  where
+    additionalTrees = [List [List [Value 6]], List [List [Value 2]]]
+
+-- Parsing stuff below here
+unsafeParse :: Parser a -> String -> a
+unsafeParse p s = case P.parse p "whatever" s of
+  Left res -> error . show $ res
+  Right res -> res
+
+intParser :: Parser Int
+intParser = read <$> P.many1 P.digit
+
+treeParser :: Parser Tree
+treeParser = valueParser P.<|> childrenParser
+  where
+    valueParser = Value <$> intParser
+    childrenParser = List <$> (P.char '[' *> P.sepBy treeParser (P.char ',') <* P.char ']')
+
+parseTree :: String -> Tree
+parseTree = unsafeParse treeParser
+
+parseBothTrees :: (String, String) -> (Tree, Tree)
+parseBothTrees (s1, s2) = (parseTree s1, parseTree s2)
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
