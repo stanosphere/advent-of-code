@@ -15,7 +15,7 @@ data Direction = N | E | S | W deriving (Show)
 data State = State {direction :: Direction, position :: Coords} deriving (Show)
 
 -- 6842
--- 0.09 secs (including drawing)
+-- 0.09 secs (including drawing and going through the curve both ways)
 part1 :: IO ()
 part1 = do
   input <- getLines "./fixtures/input10.txt"
@@ -48,25 +48,36 @@ getStart :: SymbolMap -> Coords
 getStart = fst . get . find ((== 'S') . snd) . M.toList
 
 evolveState :: SymbolMap -> State -> State
-evolveState sm (State dir pos) = nextState pos dir (sm M.! pos)
+evolveState sm (State dir pos) = nextState dir (sm M.! pos) pos
   where
     -- there are common patterns that one could extract out but I reckon case by case is fine!
     -- for example if you end up facing west that's always associated with an x change of `-1` and similar for other directions
     -- like you could have helpers called `moveSouth` etc if you wanted
-    nextState :: Coords -> Direction -> Char -> State
-    nextState (x, y) S '└' = State E (x + 1, y)
-    nextState (x, y) W '└' = State N (x, y - 1)
-    nextState (x, y) E '┘' = State N (x, y - 1)
-    nextState (x, y) S '┘' = State W (x - 1, y)
-    nextState (x, y) N '┐' = State W (x - 1, y)
-    nextState (x, y) E '┐' = State S (x, y + 1)
-    nextState (x, y) N '┌' = State E (x + 1, y)
-    nextState (x, y) W '┌' = State S (x, y + 1)
-    nextState (x, y) E '─' = State E (x + 1, y)
-    nextState (x, y) W '─' = State W (x - 1, y)
-    nextState (x, y) N '│' = State N (x, y - 1)
-    nextState (x, y) S '│' = State S (x, y + 1)
-    nextState _ _ _ = undefined
+    nextState :: Direction -> Char -> Coords -> State
+    nextState S '└' = moveE
+    nextState W '└' = moveN
+    --
+    nextState S '┘' = moveW
+    nextState E '┘' = moveN
+    --
+    nextState N '┐' = moveW
+    nextState E '┐' = moveS
+    --
+    nextState N '┌' = moveE
+    nextState W '┌' = moveS
+    --
+    nextState E '─' = moveE
+    nextState W '─' = moveW
+    --
+    nextState N '│' = moveN
+    nextState S '│' = moveS
+    --
+    nextState _ _ = undefined
+
+    moveE (x, y) = State E (x + 1, y)
+    moveW (x, y) = State W (x - 1, y)
+    moveN (x, y) = State N (x, y - 1)
+    moveS (x, y) = State S (x, y + 1)
 
 -- this is the bit that uses Jordan curve theorem
 -- could definitely do it more efficiently by choosing the shortest direction to the edge
