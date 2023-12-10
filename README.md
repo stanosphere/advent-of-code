@@ -25,7 +25,6 @@ Happy Haskelling my future self!
 - Are .cabal files usually gitignored???
 - I feel like there's a more idiomatic and/or better way for parsing than me just using `splitOn` ALL THE TIME lol
 - Historical: looks like some files might not be loadable until I sort out some problems...
-  - `Control.Monad.Trans.State.Lazy` warning in 2022/Day5
   - `Data.Text` warning in 2021/Day4
 
 ## Misc

@@ -33,4 +33,5 @@ library
     , extra
     , parsec
     , split
+    , transformers
   default-language: Haskell2010

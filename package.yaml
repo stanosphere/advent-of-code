@@ -24,6 +24,7 @@ dependencies:
   - containers
   - extra
   - parsec
+  - transformers
 
 ghc-options:
   - -Wall

@@ -5,13 +5,10 @@ import Control.Monad.Trans.State.Lazy
     execState,
     get,
     modify,
-    put,
   )
 import Data.Char (digitToInt)
-import Data.Foldable (traverse_)
 import Data.List
-  ( group,
-    sortOn,
+  ( sortOn,
     transpose,
   )
 import Data.List.Split (splitOn)
@@ -34,14 +31,14 @@ type CrateState = M.Map Int Crates
 
 part1 :: IO ()
 part1 = do
-  (initalState, commands) <- parseInput "./fixtures/input5.txt"
-  let res = execState (traverse moveCrates1 commands) initalState
+  (initialState, commands) <- parseInput "./fixtures/input5.txt"
+  let res = execState (traverse moveCrates1 commands) initialState
   print . showAnswer $ res
 
 part2 :: IO ()
 part2 = do
-  (initalState, commands) <- parseInput "./fixtures/input5.txt"
-  let res = execState (traverse moveCrates2 commands) initalState
+  (initialState, commands) <- parseInput "./fixtures/input5.txt"
+  let res = execState (traverse moveCrates2 commands) initialState
   print . showAnswer $ res
 
 moveCrates1 :: Command -> State CrateState ()
@@ -76,8 +73,8 @@ getLines filePath = fmap lines (readFile filePath)
 
 parseInput :: FilePath -> IO (CrateState, [Command])
 parseInput fp = do
-  contents <- getLines "./fixtures/input5.txt"
-  let initState = mkIntitialState contents
+  contents <- getLines fp
+  let initState = mkInitialState contents
   let commands = mkCommands contents
   return (initState, commands)
 
@@ -92,8 +89,8 @@ commandFromString s =
       [from, to] = splitOn " to " rest
    in CMD (read amount) (read from) (read to)
 
-mkIntitialState :: [String] -> CrateState
-mkIntitialState =
+mkInitialState :: [String] -> CrateState
+mkInitialState =
   M.fromList
     . map mkColumn
     . filterNot (== "")
