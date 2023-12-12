@@ -12,7 +12,9 @@ import Text.ParserCombinators.Parsec (Parser, parse)
 part1 :: IO Int
 part1 = do
   xs <- getLines "./fixtures/input12.txt"
-  return . sum . map (uncurry countValid . parseLine) $ xs
+  let res = map (uncurry countValid . parseLine) $ xs
+  print res
+  return . sum $ res
 
 countValid :: [Int] -> String -> Int
 countValid is = length . filter isValid . go

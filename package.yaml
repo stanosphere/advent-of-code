@@ -25,6 +25,8 @@ dependencies:
   - extra
   - parsec
   - transformers
+  - array
+  - mtl
 
 ghc-options:
   - -Wall
@@ -37,6 +39,7 @@ ghc-options:
   - -Wpartial-fields
   - -Wredundant-constraints
   - -Wno-missing-export-lists
+  - -Wno-prepositive-qualified-module
 
 library:
   source-dirs: src
