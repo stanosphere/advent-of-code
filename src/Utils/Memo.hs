@@ -1,3 +1,6 @@
+-- taken from this gist here
+-- https://gist.github.com/beala/d871ae8397167e7035f218a25ddf87dd
+
 module Utils.Memo where
 
 import Control.Monad.State.Strict (State, gets, modify)
