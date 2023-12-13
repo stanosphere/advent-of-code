@@ -1,9 +1,52 @@
 module Day13 where
 
+import Data.Foldable
 import Data.List (transpose)
-import Data.List.Split (splitOn)
+import Data.List.Split (chunksOf, splitOn)
+import Data.Sequence qualified as S (Seq, adjust', fromList, update)
 
-data Reflections = Reflections {vertical :: [Int], horizontal :: [Int]} deriving (Show)
+type Pattern = [[Char]]
+
+data Reflections = Reflections {vertical :: [Int], horizontal :: [Int]} deriving (Show, Eq)
+
+-- print . length . concat . concat $ patterns
+-- give me 16,394 so I reckon that's brute forcible
+
+showPattern :: Pattern -> IO ()
+showPattern xs = putStrLn "" *> traverse_ putStrLn xs
+
+part2 = do
+  patterns <- getPatterns "./fixtures/input13Toy.txt"
+  let firstPattern = ["##", ".."]
+  let repacememtPatterns = getAllReplacements firstPattern
+  let res = map findNewRefl patterns
+  traverse_ print res
+
+findNewRefl :: Pattern -> [Reflections]
+findNewRefl p =
+  filter (/= originalRefls)
+    . filter (\(Reflections v h) -> not . null $ (v ++ h))
+    . map getBothReflections
+    . getAllReplacements
+    $ p
+  where
+    originalRefls = getBothReflections p
+
+swapChar :: Char -> Char
+swapChar '#' = '.'
+swapChar '.' = '#'
+swapChar _ = undefined
+
+getAllReplacements :: Pattern -> [Pattern]
+getAllReplacements ps =
+  let asSeq = S.fromList . map S.fromList $ ps
+      updates = [(x, y) | (y, xs) <- zip [0 ..] ps, (x, _) <- zip [0 ..] xs]
+      res = map (`applyUpdate` asSeq) $ updates
+      res' = map (map toList . toList) res
+   in res'
+
+applyUpdate :: (Int, Int) -> S.Seq (S.Seq Char) -> S.Seq (S.Seq Char)
+applyUpdate (x, y) = S.adjust' (S.adjust' swapChar x) y
 
 -- 42974
 -- 0.02 secs
