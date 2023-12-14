@@ -5,6 +5,8 @@ import Data.List (groupBy, sort, transpose)
 import Data.Map qualified as M (elems)
 import Utils.Grouping (groupMap)
 
+-- 0.03 secs
+part1 :: IO Int
 part1 = do
   inp <- getLines "./fixtures/input14.txt"
   return . sum . zipWith (\i r -> i * countRoundRocks r) [1 ..] . reverse . shiftNorth $ inp
@@ -15,7 +17,7 @@ part1 = do
 -- I've pulled how I know this out as a function
 determineRepeatStructure :: IO ()
 determineRepeatStructure =
-  getLines "./fixtures/input14Toy.txt"
+  getLines "./fixtures/input14.txt"
     >>= traverse_ print
       . M.elems
       . groupMap snd fst
@@ -23,12 +25,26 @@ determineRepeatStructure =
       . zip [(0 :: Int) ..]
       . iterate applyCycle
 
+-- this is very prone to off by one errors...
+-- so we will go carefully
+-- so skip 3
+-- count is 1,000,000,000 - 3 = 999,999,997
+-- then we do 142,857,142 * 7 = 999,999,994
+-- which gets us to 3
+-- so in total we need only do 6 cycles I think
+
+-- now for par II
+-- we skip 93
+-- 999,999,907
+-- we skip 999999900
+-- which leaves us with 7
+-- so we need 100th iteration
+
+-- 2.43 secs
+part2 :: IO Int
 part2 = do
-  inp <- getLines "./fixtures/input14Toy.txt"
-
-  let cycles = M.elems . groupMap snd fst . take 200 . zip [0 ..] . iterate applyCycle $ inp
-
-  traverse_ print cycles
+  inp <- getLines "./fixtures/input14.txt"
+  return . sum . zipWith (\i r -> i * countRoundRocks r) [1 ..] . reverse $ (iterate applyCycle inp !! 100)
 
 applyCycle :: [String] -> [String]
 applyCycle = shiftEast . shiftSouth . shiftWest . shiftNorth
