@@ -2,6 +2,8 @@ module Day14 where
 
 import Data.Foldable (traverse_)
 import Data.List (groupBy, sort, transpose)
+import Data.Map qualified as M (elems)
+import Utils.Grouping (groupMap)
 
 part1 = do
   inp <- getLines "./fixtures/input14.txt"
@@ -9,14 +11,10 @@ part1 = do
 
 part2 = do
   inp <- getLines "./fixtures/input14Toy.txt"
-  let res1 = applyCycle inp
-  let res2 = applyCycle res1
-  let res3 = applyCycle res2
-  traverse_ putStrLn res1
-  putStrLn ""
-  traverse_ putStrLn res2
-  putStrLn ""
-  traverse_ putStrLn res3
+
+  let cycles = M.elems . groupMap snd fst . take 200 . zip [0 ..] . iterate applyCycle $ inp
+
+  traverse_ print cycles
 
 applyCycle :: [String] -> [String]
 applyCycle = shiftEast . shiftSouth . shiftWest . shiftNorth
