@@ -9,6 +9,20 @@ part1 = do
   inp <- getLines "./fixtures/input14.txt"
   return . sum . zipWith (\i r -> i * countRoundRocks r) [1 ..] . reverse . shiftNorth $ inp
 
+-- I conjecture that the cycle probably repeats itself
+-- Indeed the toy example has a 7-fold repeat pattern after 3 iterations
+-- I note that the real example has a 9-fold repeat pattern which starts after 92 cycles
+-- I've pulled how I know this out as a function
+determineRepeatStructure :: IO ()
+determineRepeatStructure =
+  getLines "./fixtures/input14Toy.txt"
+    >>= traverse_ print
+      . M.elems
+      . groupMap snd fst
+      . take 130
+      . zip [(0 :: Int) ..]
+      . iterate applyCycle
+
 part2 = do
   inp <- getLines "./fixtures/input14Toy.txt"
 
