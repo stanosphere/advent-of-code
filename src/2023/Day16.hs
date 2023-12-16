@@ -34,11 +34,18 @@ removeOutOfBounds (maxX, maxY) = S.filter (\(x, y) -> x >= 0 && y >= 0 && x < ma
 part1 :: IO Int
 part1 = do
   inp <- getLines "./fixtures/input16.txt"
-  let symbolMap = getSymbolCoords inp
-  let startingSquare = S.singleton (LS E (0, 0))
-  let res' = removeOutOfBounds (110, 110) . S.map position . seen . get . find ((== S.empty) . laserFrontier) . iterate (step symbolMap) $ FullState startingSquare startingSquare
-  --   _ <- prettyPrintLasers 110 res'
-  return . S.size $ res'
+  return (runStartingFrom 110 (getSymbolCoords inp) (LS E (0, 0)))
+
+runStartingFrom :: Int -> SymbolMap -> LaserState -> Int
+runStartingFrom maxSize symbolMap startingState =
+  S.size
+    . removeOutOfBounds (maxSize, maxSize)
+    . S.map position
+    . seen
+    . get
+    . find ((== S.empty) . laserFrontier)
+    . iterate (step symbolMap)
+    $ FullState (S.singleton startingState) (S.singleton startingState)
 
 -- so I think we'll want to run the evolveStates function and then get rid of anything we've seen before from the frontier
 -- and then we can just run this function until we have no laser frontiers left I hope!
