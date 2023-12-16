@@ -36,6 +36,27 @@ part1 = do
   inp <- getLines "./fixtures/input16.txt"
   return (runStartingFrom 110 (getSymbolCoords inp) (LS E (0, 0)))
 
+-- 8437
+-- 36.48 secs, which is technically too slow I think
+-- there are definitely clever ways to do this sort of thing
+-- for example if you happen across a LaserFrontier state that you've already seen in a previous run (which I think is fairly likely given all the cycles and stuff)
+-- then you could just lookup the final state for that run and `union` it with what you've already got
+part2 :: IO Int
+part2 = do
+  inp <- getLines "./fixtures/input16.txt"
+  let startingPoints = starts 110
+  let res = map (runStartingFrom 110 (getSymbolCoords inp)) startingPoints
+  print res
+  return . maximum $ res
+
+starts :: Int -> [LaserState]
+starts size = headingEast ++ headingWest ++ headingNorth ++ headingSouth
+  where
+    headingEast = map (\i -> LS E (0, i)) [0 .. size - 1]
+    headingWest = map (\i -> LS W (size - 1, i)) [0 .. size - 1]
+    headingNorth = map (\i -> LS N (i, size - 1)) [0 .. size - 1]
+    headingSouth = map (\i -> LS S (i, 0)) [0 .. size - 1]
+
 runStartingFrom :: Int -> SymbolMap -> LaserState -> Int
 runStartingFrom maxSize symbolMap startingState =
   S.size
