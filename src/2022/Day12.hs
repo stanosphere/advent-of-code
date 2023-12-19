@@ -15,6 +15,8 @@ import Data.Maybe (mapMaybe)
 import Data.Set qualified as S (Set, fromList)
 import Utils.Dijkstra
 
+data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)
+
 data Node = Node {coords :: Coords, elevation :: Elevation}
 
 type Edges = M.Map Coords [Coords]
@@ -114,7 +116,7 @@ getNodes ::
   (Char -> Bool) ->
   (Char -> Bool) ->
   [String] ->
-  (Nodes, StartNode, S.Set EndNode)
+  (Nodes, StartNode Coords, S.Set (EndNode Coords))
 getNodes startNodeSelector endNodeSelector input =
   let nodes =
         [ (Coords i j, x)

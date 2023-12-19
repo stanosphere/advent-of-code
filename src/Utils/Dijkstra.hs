@@ -17,33 +17,33 @@ import Data.Map qualified as M
   )
 import Data.Set qualified as S (Set, map)
 
-data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)
+type StartNode nodeId = nodeId
 
-type StartNode = Coords
-
-type EndNode = Coords
+type EndNode nodeId = nodeId
 
 data Visitation = Visited | UnVisited deriving (Show, Eq, Ord)
 
-type TentativeDistances = M.Map Coords (Int, Visitation)
+type TentativeDistances nodeId = M.Map nodeId (Int, Visitation)
 
-shouldStop :: S.Set EndNode -> TentativeDistances -> Bool
+shouldStop :: Ord nodeId => S.Set (EndNode nodeId) -> TentativeDistances nodeId -> Bool
 shouldStop endNodeCoords tds = any (\x -> fmap snd x == Just Visited) . S.map (`M.lookup` tds) $ endNodeCoords
 
 dijkstra ::
-  (Coords -> Int) ->
-  (Coords -> [Coords]) ->
-  StartNode ->
-  [TentativeDistances]
+  Ord nodeId =>
+  (nodeId -> Int) -> -- scoreFn
+  (nodeId -> [nodeId]) -> -- neighbourGetter
+  StartNode nodeId ->
+  [TentativeDistances nodeId]
 dijkstra scoreFn neighbourGetter startNode = iterate (dijkstraStep scoreFn neighbourGetter) dInit
   where
     dInit = M.singleton startNode (0, UnVisited)
 
 dijkstraStep ::
-  (Coords -> Int) ->
-  (Coords -> [Coords]) ->
-  TentativeDistances ->
-  TentativeDistances
+  Ord nodeId =>
+  (nodeId -> Int) ->
+  (nodeId -> [nodeId]) ->
+  TentativeDistances nodeId ->
+  TentativeDistances nodeId
 dijkstraStep scoreFn neighbourGetter distanceMap =
   let (currentNodeCoords, currentNodeDist) = getCurrentNode distanceMap
       neighbours = neighbourGetter currentNodeCoords
@@ -51,10 +51,22 @@ dijkstraStep scoreFn neighbourGetter distanceMap =
       res' = M.adjust (\(i, _) -> (i, Visited)) currentNodeCoords res
    in res'
 
-updateNeighbours :: (Coords -> Int) -> Int -> TentativeDistances -> [Coords] -> TentativeDistances
+updateNeighbours ::
+  Ord nodeId =>
+  (nodeId -> Int) ->
+  Int ->
+  TentativeDistances nodeId ->
+  [nodeId] ->
+  TentativeDistances nodeId
 updateNeighbours scoreFn currentNodeDistance = foldl (updateNeighbour scoreFn currentNodeDistance)
 
-updateNeighbour :: (Coords -> Int) -> Int -> TentativeDistances -> Coords -> TentativeDistances
+updateNeighbour ::
+  Ord nodeId =>
+  (nodeId -> Int) ->
+  Int ->
+  TentativeDistances nodeId ->
+  nodeId ->
+  TentativeDistances nodeId
 updateNeighbour scoreFn currentNodeDistance distanceMap neighbor =
   alter' alterFn neighbor distanceMap
   where
@@ -71,7 +83,7 @@ updateNeighbour scoreFn currentNodeDistance distanceMap neighbor =
 
 -- I think really this should be more like a queue than having to iterate through a map each time
 -- at the very least I could split up the Visited and UnVisited into separate maps...
-getCurrentNode :: TentativeDistances -> (Coords, Int)
+getCurrentNode :: TentativeDistances nodeId -> (nodeId, Int)
 getCurrentNode =
   minimumOn snd
     . map (second fst)
