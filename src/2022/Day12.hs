@@ -37,7 +37,7 @@ import Utils.Dijkstra
 
 -- type TentativeDistances = M.Map Coords (Int, Visitation)
 
--- 6.38 secs
+-- 6.38 secs (now quicker with rejigged djikstra)
 -- answer: 380
 part1 :: IO ()
 part1 = solve startNodeSelector endNodeSelector edgeSelector
@@ -49,6 +49,7 @@ part1 = solve startNodeSelector endNodeSelector edgeSelector
         then Just . coords $ candidateToNode
         else Nothing
 
+-- hangs for ages and ages, with old dijkstra it took like 10 seconds
 part2 :: IO ()
 part2 = solve startNodeSelector endNodeSelector edgeSelector
   where
@@ -66,8 +67,9 @@ solve startNodeSelector endNodeSelector edgeSelector = do
   let (nodes, startNode, endNodes) =
         getNodes startNodeSelector endNodeSelector input
   let edges = getEdges edgeSelector nodes
-  let res' = take 20 . dijkstra $ (startNode, edges)
-  traverse_ print res'
+  let [r1, r2] = take 2 . drop 20000 . dijkstra $ (startNode, edges)
+  print endNodes
+  print (r1 == r2)
   let res =
         M.filterWithKey (\k (i, v) -> k `elem` endNodes && v == Visited)
           . head
