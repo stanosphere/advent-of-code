@@ -26,6 +26,8 @@ Happy Haskelling my future self!
 - I feel like there's a more idiomatic and/or better way for parsing than me just using `splitOn` ALL THE TIME lol
 - Might as well use proper like module paths
   - i.e. rename folders to be like `Y2023` rather than `2023` and then in files I can have `module Y2023.Day15 where` rather than `module Day15 where`
+- You might need `{-# LANGUAGE ImportQualifiedPost #-}` occasionally
+
 
 
 ## Misc
