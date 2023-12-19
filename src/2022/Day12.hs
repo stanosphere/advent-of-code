@@ -3,22 +3,25 @@ module Day12 where
 import Data.Bifunctor (second)
 import Data.Char (ord)
 import Data.Foldable (traverse_)
-import Data.List (tails)
 import Data.Map qualified as M
   ( Map,
-    adjust,
-    filter,
     filterWithKey,
     findWithDefault,
     fromList,
     lookup,
-    mapWithKey,
     toList,
-    (!),
   )
 import Data.Maybe (mapMaybe)
-import Data.Set qualified as S (Set, fromList, map)
+import Data.Set qualified as S (Set, fromList)
 import Utils.Dijkstra
+
+data Node = Node {coords :: Coords, elevation :: Elevation}
+
+type Edges = M.Map Coords [Coords]
+
+type Elevation = Int
+
+type Nodes = M.Map Coords Elevation
 
 -- data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)
 
@@ -68,57 +71,16 @@ solve startNodeSelector endNodeSelector edgeSelector = do
   let (nodes, startNode, endNodes) =
         getNodes startNodeSelector endNodeSelector input
   let edges = getEdges edgeSelector nodes
+  let neighbourGetter n = M.findWithDefault [] n edges
+
+  -- could probably use `find` here lol
   let res =
-        M.filterWithKey (\k (i, v) -> k `elem` endNodes && v == Visited)
+        M.filterWithKey (\k (_, v) -> k `elem` endNodes && v == Visited)
           . head
           . dropWhile (not . shouldStop endNodes)
-          . dijkstra
-          $ (startNode, edges)
+          . dijkstra neighbourGetter
+          $ startNode
   traverse_ print . M.toList $ res
-
--- shouldContinue :: S.Set EndNode -> TentativeDistances -> Bool
--- shouldContinue coordss tds = not . any (\(_, v) -> v == Visited) . S.map (tds M.!) $ coordss
-
--- dijkstra :: (StartNode, Edges) -> [TentativeDistances]
--- dijkstra (startNode, edges) =
---   let dInit = mkDijkstraInit startNode edges
---    in iterate (dijkstraStep edges) dInit
-
--- mkDijkstraInit :: StartNode -> Edges -> TentativeDistances
--- mkDijkstraInit startNode =
---   M.mapWithKey
---     (\k _ -> if k == startNode then (0, UnVisited) else (maxInt, UnVisited))
-
--- dijkstraStep :: Edges -> TentativeDistances -> TentativeDistances
--- dijkstraStep edges distanceMap =
---   let (currentNodeCoords, currentNodeDist) = getCurrentNode distanceMap
---       neighbours = M.findWithDefault [] currentNodeCoords edges
---       res = updateNeighbours currentNodeDist distanceMap neighbours
---       res' = M.adjust (\(i, _) -> (i, Visited)) currentNodeCoords res
---    in res'
-
--- updateNeighbours :: Int -> TentativeDistances -> [Coords] -> TentativeDistances
--- updateNeighbours currentNodeDistance =
---   foldl (updateNeighbour currentNodeDistance)
-
--- updateNeighbour :: Int -> TentativeDistances -> Coords -> TentativeDistances
--- updateNeighbour currentNodeDistance distanceMap neighbor =
---   M.adjust
---     (\(i, v) -> (min i (currentNodeDistance + 1), v))
---     neighbor
---     distanceMap
-
--- getCurrentNode :: TentativeDistances -> (Coords, Int)
--- getCurrentNode =
---   foldr
---     (\(k1, v1) -> \(k2, v2) -> if v1 < v2 then (k1, v1) else (k2, v2))
---     (Coords (-1) (-1), maxInt)
---     . map (\(k, v) -> (k, fst v))
---     . M.toList
---     . M.filter (\(_, v) -> v == UnVisited)
-
-maxInt :: Int
-maxInt = maxBound
 
 -- so much parsing stuff!
 getEdges :: (Node -> Node -> Maybe Coords) -> Nodes -> Edges
@@ -129,8 +91,7 @@ getEdges shouldKeepEdge nds =
     . M.toList
     $ nds
 
-mkEdgesForSingleNode ::
-  (Node -> Node -> Maybe Coords) -> (Node, [Node]) -> (Coords, [Coords])
+mkEdgesForSingleNode :: (Node -> Node -> Maybe Coords) -> (Node, [Node]) -> (Coords, [Coords])
 mkEdgesForSingleNode shouldKeepEdge (fromNode, candidateTos) =
   (coords fromNode, mapMaybe (shouldKeepEdge fromNode) candidateTos)
 
