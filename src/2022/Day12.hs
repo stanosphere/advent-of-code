@@ -66,10 +66,12 @@ solve startNodeSelector endNodeSelector edgeSelector = do
   let (nodes, startNode, endNodes) =
         getNodes startNodeSelector endNodeSelector input
   let edges = getEdges edgeSelector nodes
+  let res' = take 20 . dijkstra $ (startNode, edges)
+  traverse_ print res'
   let res =
         M.filterWithKey (\k (i, v) -> k `elem` endNodes && v == Visited)
           . head
-          . dropWhile (shouldContinue endNodes)
+          . dropWhile (not . shouldStop endNodes)
           . dijkstra
           $ (startNode, edges)
   traverse_ print . M.toList $ res

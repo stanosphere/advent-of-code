@@ -7,11 +7,13 @@ import Data.Char (ord)
 import Data.Map qualified as M
   ( Map,
     adjust,
+    alter,
     filter,
     findWithDefault,
     fromList,
     lookup,
     mapWithKey,
+    singleton,
     toList,
     (!),
   )
@@ -36,18 +38,17 @@ data Visitation = Visited | UnVisited deriving (Show, Eq, Ord)
 
 type TentativeDistances = M.Map Coords (Int, Visitation)
 
-shouldContinue :: S.Set EndNode -> TentativeDistances -> Bool
-shouldContinue coordss tds = not . any (\(_, v) -> v == Visited) . S.map (tds M.!) $ coordss
+shouldStop :: S.Set EndNode -> TentativeDistances -> Bool
+shouldStop endNodeCoords tds = all (\x -> fmap snd x == Just Visited) . S.map (`M.lookup` tds) $ endNodeCoords
 
 dijkstra :: (StartNode, Edges) -> [TentativeDistances]
 dijkstra (startNode, edges) =
   let dInit = mkDijkstraInit startNode edges
    in iterate (dijkstraStep edges) dInit
 
+-- ok so I think this can actually just start as empty map which we slowly add to over time
 mkDijkstraInit :: StartNode -> Edges -> TentativeDistances
-mkDijkstraInit startNode =
-  M.mapWithKey
-    (\k _ -> if k == startNode then (0, UnVisited) else (maxInt, UnVisited))
+mkDijkstraInit startNode _ = M.singleton startNode (0, UnVisited)
 
 dijkstraStep :: Edges -> TentativeDistances -> TentativeDistances
 dijkstraStep edges distanceMap =
@@ -63,10 +64,15 @@ updateNeighbours currentNodeDistance =
 
 updateNeighbour :: Int -> TentativeDistances -> Coords -> TentativeDistances
 updateNeighbour currentNodeDistance distanceMap neighbor =
-  M.adjust
-    (\(i, v) -> (min i (currentNodeDistance + 1), v))
-    neighbor
-    distanceMap
+  alter' (alterFn currentNodeDistance) neighbor distanceMap
+  where
+    alterFn :: Int -> Maybe (Int, Visitation) -> (Int, Visitation)
+    alterFn currentNodeDistance (Just (i, v)) = (min i (currentNodeDistance + 1), v)
+    alterFn currentNodeDistance Nothing = ((currentNodeDistance + 1), UnVisited)
+
+    -- like alter but can't delete elements
+    alter' :: Ord k => (Maybe a -> a) -> k -> M.Map k a -> M.Map k a
+    alter' f = M.alter (Just . f)
 
 -- kinda feel like one could use minBy or something like that
 getCurrentNode :: TentativeDistances -> (Coords, Int)
@@ -81,7 +87,7 @@ getCurrentNode =
 maxInt :: Int
 maxInt = maxBound
 
--- so much parsing stuff!
+-- so much parsing stuff
 -- getEdges :: (Node -> Node -> Maybe Coords) -> Nodes -> Edges
 -- getEdges shouldKeepEdge nds =
 --   M.fromList
