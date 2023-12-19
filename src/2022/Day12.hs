@@ -78,7 +78,7 @@ solve startNodeSelector endNodeSelector edgeSelector = do
         M.filterWithKey (\k (_, v) -> k `elem` endNodes && v == Visited)
           . head
           . dropWhile (not . shouldStop endNodes)
-          . dijkstra neighbourGetter
+          . dijkstra (const 1) neighbourGetter
           $ startNode
   traverse_ print . M.toList $ res
 
