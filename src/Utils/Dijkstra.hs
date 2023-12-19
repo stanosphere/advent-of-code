@@ -39,7 +39,7 @@ data Visitation = Visited | UnVisited deriving (Show, Eq, Ord)
 type TentativeDistances = M.Map Coords (Int, Visitation)
 
 shouldStop :: S.Set EndNode -> TentativeDistances -> Bool
-shouldStop endNodeCoords tds = all (\x -> fmap snd x == Just Visited) . S.map (`M.lookup` tds) $ endNodeCoords
+shouldStop endNodeCoords tds = any (\x -> fmap snd x == Just Visited) . S.map (`M.lookup` tds) $ endNodeCoords
 
 dijkstra :: (StartNode, Edges) -> [TentativeDistances]
 dijkstra (startNode, edges) =
