@@ -30,7 +30,7 @@ part1 = solve startNodeSelector endNodeSelector edgeSelector
         then Just . coords $ candidateToNode
         else Nothing
 
--- 0.65 secs
+-- 0.11 secs
 -- answer: 375
 part2 :: IO ()
 part2 = solve startNodeSelector endNodeSelector edgeSelector
@@ -50,7 +50,7 @@ solve startNodeSelector endNodeSelector edgeSelector = do
   let neighbourGetter n = M.findWithDefault [] n edges
   let scoreFn = const 1
   let res = dijkstra scoreFn neighbourGetter endNodes startNode
-  traverse_ print . fmap M.toList $ res
+  print res
 
 -- so much parsing stuff!
 getEdges :: (Node -> Node -> Maybe Coords) -> Nodes -> Edges
