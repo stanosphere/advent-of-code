@@ -4,6 +4,7 @@ module Utils.Dijkstra (dijkstra, StartNode, EndNode, DijkstraState) where
 
 -- based on my day 12 2022 implementation and heavily refactored + improved
 -- assuming score is always an int but can probs generalise
+-- should probably rename *dist* to *score* at some point...
 
 -- note: `<=<` is basically the same as `.` but for monadic functions
 
@@ -11,7 +12,6 @@ import Control.Monad ((<=<))
 import Data.List.Extra (find, minimumOn)
 import Data.Map qualified as M (Map, alter, delete, empty, insert, notMember, singleton, toList)
 import Data.Maybe (isJust)
-import Data.Set qualified as S (Set, member)
 
 type StartNode nodeId = nodeId
 
@@ -31,28 +31,28 @@ dijkstra ::
   Ord nodeId =>
   (nodeId -> Int) -> -- scoreFn
   (nodeId -> [nodeId]) -> -- neighbourGetter
-  S.Set (EndNode nodeId) ->
+  (nodeId -> Bool) -> -- could maybe pass in a function instead
   StartNode nodeId ->
   Maybe (EndNode nodeId, Int)
-dijkstra scoreFn neighbourGetter endNodes startNode = res
+dijkstra scoreFn neighbourGetter isEndNode startNode = res
   where
-    res = foundEndNode <=< find (isJust . foundEndNode) . iterate (dijkstraStep scoreFn neighbourGetter endNodes) $ dInit
+    res = foundEndNode <=< find (isJust . foundEndNode) . iterate (dijkstraStep scoreFn neighbourGetter isEndNode) $ dInit
     dInit = DState M.empty (M.singleton startNode 0) Nothing
 
 dijkstraStep ::
   Ord nodeId =>
   (nodeId -> Int) ->
   (nodeId -> [nodeId]) ->
-  S.Set (EndNode nodeId) ->
+  (nodeId -> Bool) ->
   DijkstraState nodeId ->
   DijkstraState nodeId
-dijkstraStep scoreFn neighbourGetter endNodes (DState visited unVisited _) = DState visited' unVisited' foundEndNode'
+dijkstraStep scoreFn neighbourGetter isEndNode (DState visited unVisited _) = DState visited' unVisited' foundEndNode'
   where
     (currentNodeId, currentNodeDist) = getCurrentNode unVisited
     neighbours = filter (`M.notMember` visited) . neighbourGetter $ currentNodeId
     unVisited' = M.delete currentNodeId . updateNeighbours scoreFn currentNodeDist unVisited $ neighbours
     visited' = M.insert currentNodeId currentNodeDist visited
-    foundEndNode' = if S.member currentNodeId endNodes then Just (currentNodeId, currentNodeDist) else Nothing
+    foundEndNode' = if isEndNode currentNodeId then Just (currentNodeId, currentNodeDist) else Nothing
 
 updateNeighbours ::
   Ord nodeId =>

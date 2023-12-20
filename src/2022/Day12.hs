@@ -2,10 +2,9 @@ module Day12 where
 
 import Data.Bifunctor (second)
 import Data.Char (ord)
-import Data.Foldable (traverse_)
 import Data.Map qualified as M (Map, findWithDefault, fromList, lookup, toList)
 import Data.Maybe (mapMaybe)
-import Data.Set qualified as S (Set, fromList)
+import Data.Set qualified as S (Set, fromList, member)
 import Utils.Dijkstra (EndNode, StartNode, dijkstra)
 
 data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)
@@ -49,7 +48,8 @@ solve startNodeSelector endNodeSelector edgeSelector = do
   let edges = getEdges edgeSelector nodes
   let neighbourGetter n = M.findWithDefault [] n edges
   let scoreFn = const 1
-  let res = dijkstra scoreFn neighbourGetter endNodes startNode
+  let isEndNode x = S.member x endNodes
+  let res = dijkstra scoreFn neighbourGetter isEndNode startNode
   print res
 
 -- so much parsing stuff!
