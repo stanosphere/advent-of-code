@@ -27,11 +27,13 @@ type TentativeDistances nodeId = M.Map nodeId Int
 
 type FinalisedDistances nodeId = M.Map nodeId Int
 
+-- in scala I'd make this a trait where you have to specify the functions
+-- maybe this can be done in Haskell by making it a class rather than a function?
 dijkstra ::
   Ord nodeId =>
   (nodeId -> Int) -> -- scoreFn
   (nodeId -> [nodeId]) -> -- neighbourGetter
-  (nodeId -> Bool) -> -- could maybe pass in a function instead
+  (nodeId -> Bool) -> -- end node check
   StartNode nodeId ->
   Maybe (EndNode nodeId, Int)
 dijkstra scoreFn neighbourGetter isEndNode startNode = res

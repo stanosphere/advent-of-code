@@ -2,11 +2,11 @@ module Day10 where
 
 import Data.Foldable (find, traverse_)
 
-data Posistion = Pos {x :: Int, y :: Int} deriving (Show, Eq)
+data Position = Pos {x :: Int, y :: Int} deriving (Show, Eq)
 
 data Velocity = Vel {vx :: Int, vy :: Int} deriving (Show)
 
-type State = [(Posistion, Velocity)]
+type State = [(Position, Velocity)]
 
 data GridSize = GS
   { minX :: Int,
@@ -39,24 +39,24 @@ part2 = do
 step :: State -> State
 step = map stepPoint
   where
-    stepPoint :: (Posistion, Velocity) -> (Posistion, Velocity)
+    stepPoint :: (Position, Velocity) -> (Position, Velocity)
     stepPoint (Pos x y, Vel vx vy) = (Pos (x + vx) (y + vy), Vel vx vy)
 
 showState :: State -> IO ()
 showState = showPositions . map fst
 
-showPositions :: [Posistion] -> IO ()
+showPositions :: [Position] -> IO ()
 showPositions ps =
   let (GS minX minY maxX maxY) = getGridSize ps
    in traverse_ (print . (\cy -> map (\cx -> if Pos cx cy `elem` ps then '#' else ' ') [minX .. maxX])) [minY .. maxY]
 
-getGridSize :: [Posistion] -> GridSize
+getGridSize :: [Position] -> GridSize
 getGridSize =
   foldl
     (\(GS minX minY maxX maxY) (Pos x y) -> GS (min x minX) (min y minY) (max x maxX) (max y maxY))
     (GS maxBound maxBound minBound minBound)
 
-getGridArea :: [Posistion] -> Int
+getGridArea :: [Position] -> Int
 getGridArea ps =
   let (GS minX minY maxX maxY) = getGridSize ps
    in (maxX - minX) * (maxY - minY)
@@ -64,7 +64,7 @@ getGridArea ps =
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
 
-parseLine :: String -> (Posistion, Velocity)
+parseLine :: String -> (Position, Velocity)
 parseLine line =
   let x = read . take 6 . drop 10 $ line
       y = read . take 6 . drop 18 $ line
