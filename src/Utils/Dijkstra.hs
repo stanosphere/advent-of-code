@@ -5,6 +5,8 @@ module Utils.Dijkstra (dijkstra, StartNode, EndNode, DijkstraState) where
 -- based on my day 12 2022 implementation and heavily refactored + improved
 -- assuming score is always an int but can probs generalise
 
+-- note: `<=<` is basically the same as `.` but for monadic functions
+
 import Control.Monad ((<=<))
 import Data.List.Extra (find, minimumOn)
 import Data.Map qualified as M (Map, alter, delete, empty, insert, notMember, singleton, toList)
