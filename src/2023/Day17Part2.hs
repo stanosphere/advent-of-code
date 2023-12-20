@@ -2,7 +2,7 @@ module Day17Part2 where
 
 import Data.Char (digitToInt, intToDigit)
 import Data.Foldable (traverse_)
-import Data.Map qualified as M (Map, fromList, (!))
+import Data.Map qualified as M (Map, fromList, toList, (!))
 import Utils.Dijkstra (EndNode, StartNode, dijkstra)
 
 type Coords = (Int, Int)
@@ -30,7 +30,10 @@ getValidNeighbours :: GridSize -> Node -> [Node]
 getValidNeighbours gs n =
   if coords n == (0, 0)
     then filter (withinBounds gs) (neighboursOtherDirections (Node (0, 0) D 0) ++ neighboursOtherDirections (Node (0, 0) R 0))
-    else filter (withinBounds gs) (neighbourSameDirection n ++ neighboursOtherDirections n)
+    else filter (withinBounds gs) . getValidNeighbours' $ n
+
+getValidNeighbours' :: Node -> [Node]
+getValidNeighbours' n = neighbourSameDirection n ++ neighboursOtherDirections n
 
 neighbourSameDirection :: Node -> [Node]
 neighbourSameDirection (Node (x, y) U prevSteps) = [Node (x, y - 1) U (prevSteps + 1) | prevSteps < 10]
@@ -38,15 +41,12 @@ neighbourSameDirection (Node (x, y) D prevSteps) = [Node (x, y + 1) D (prevSteps
 neighbourSameDirection (Node (x, y) L prevSteps) = [Node (x - 1, y) L (prevSteps + 1) | prevSteps < 10]
 neighbourSameDirection (Node (x, y) R prevSteps) = [Node (x + 1, y) R (prevSteps + 1) | prevSteps < 10]
 
--- hmm with this sort of teleport I'm missing intermediate heats
--- so I think the true logic is
--- if it has prev steps < 4 then it MUST move on and can't turn
--- otherwise it can either move on or turn
+-- basically teleports it
 neighboursOtherDirections :: Node -> [Node]
-neighboursOtherDirections (Node (x, y) U _) = [Node (x - 1, y) L 4, Node (x + 1, y) R 1]
-neighboursOtherDirections (Node (x, y) D _) = [Node (x - 1, y) L 4, Node (x + 1, y) R 1]
-neighboursOtherDirections (Node (x, y) L _) = [Node (x, y - 1) U 4, Node (x, y + 1) D 1]
-neighboursOtherDirections (Node (x, y) R _) = [Node (x, y - 1) U 4, Node (x, y + 1) D 1]
+neighboursOtherDirections (Node (x, y) U _) = [Node (x - 4, y) L 4, Node (x + 4, y) R 4]
+neighboursOtherDirections (Node (x, y) D _) = [Node (x - 4, y) L 4, Node (x + 4, y) R 4]
+neighboursOtherDirections (Node (x, y) L _) = [Node (x, y - 4) U 4, Node (x, y + 4) D 4]
+neighboursOtherDirections (Node (x, y) R _) = [Node (x, y - 4) U 4, Node (x, y + 4) D 4]
 
 withinBounds :: GridSize -> Node -> Bool
 withinBounds (GS maxX maxY) (Node (x, y) _ _) = x >= 0 && x <= maxX && y >= 0 && y <= maxY
@@ -59,15 +59,16 @@ prettyPrintSymbolMap size mp =
   let counter = [0 .. size]
    in traverse_ putStrLn [[intToDigit (mp M.! (x, y)) | x <- counter] | y <- counter]
 
-part1 = do
-  x <- getLines "./fixtures/input17Toy.txt"
+-- 1362
+-- takes about a minute to run !!!
+part2 = do
+  x <- getLines "./fixtures/input17.txt"
   let nodeMap = getSymbolCoords x
   let gridSize = getGridSize x
   let res = solve nodeMap gridSize
   print res
 
--- 1238
-solve :: NodeMap -> GridSize -> Maybe (EndNode Node, Int)
+-- solve :: NodeMap -> GridSize -> Maybe (EndNode Node, Int)
 solve nm gs = dijkstra scoreFn neighbourGetter isEndNode startNode
   where
     scoreFn :: Node -> Int
@@ -77,13 +78,25 @@ solve nm gs = dijkstra scoreFn neighbourGetter isEndNode startNode
     isEndNode :: Node -> Bool
     isEndNode = isEndNode' gs
     startNode :: StartNode Node
-    startNode = Node (0, 0) D 0 -- I guess we'll kinda need two start nodes
+    startNode = Node (0, 0) R 0
 
 isEndNode' :: GridSize -> Node -> Bool
 isEndNode' (GS minX minY) (Node (x, y) _ _) = x == minX && y == minY
 
 scoreFn' :: NodeMap -> Node -> Int
-scoreFn' nm (Node (x, y) _ _) = nm M.! (x, y)
+scoreFn' nm n@(Node _ _ prevSteps) =
+  if prevSteps == 4
+    then scoreFnForTeleport nm n
+    else scoreFnForCoords nm (coords n)
+
+scoreFnForCoords :: NodeMap -> Coords -> Int
+scoreFnForCoords nm cs = nm M.! cs
+
+scoreFnForTeleport :: NodeMap -> Node -> Int
+scoreFnForTeleport nm (Node (x, y) R _) = sum . map (\off -> scoreFnForCoords nm (x - off, y)) $ [0 .. 3]
+scoreFnForTeleport nm (Node (x, y) L _) = sum . map (\off -> scoreFnForCoords nm (x + off, y)) $ [0 .. 3]
+scoreFnForTeleport nm (Node (x, y) U _) = sum . map (\off -> scoreFnForCoords nm (x, y + off)) $ [0 .. 3]
+scoreFnForTeleport nm (Node (x, y) D _) = sum . map (\off -> scoreFnForCoords nm (x, y - off)) $ [0 .. 3]
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
