@@ -1,22 +1,22 @@
 module Day18 where
 
-import Data.Foldable (traverse_)
-import Data.Set qualified as S (Set, empty, fromList, member, toList, union)
 import Text.Parsec qualified as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
+import Utils.Grouping (pairs)
 
 -- I reckon Pick's theorem might just sort us out
 -- https://en.wikipedia.org/wiki/Pick%27s_theorem
 -- unless the tunnels intersect I guess?
 -- I'll draw the tunnels and see if that's the case...
+-- I think what we actually need instead is the shoelace formula
+-- https://en.wikipedia.org/wiki/Shoelace_formula
+-- we need both formulas...
 
 data Direction = U | D | L | R deriving (Show)
 
 data Instruction = Ins {dir :: Direction, steps :: Int, colour :: String} deriving (Show)
 
 type Coords = (Int, Int)
-
-data State = State {foundPoints :: S.Set Coords, currentPosition :: Coords}
 
 data GridSize = GS
   { minX :: Int,
@@ -29,45 +29,32 @@ data GridSize = GS
 part1 = do
   inp <- getLines "./fixtures/input18.txt"
   let instructions = map parseInstruction inp
-  let res = processAllInstructions instructions
-  plotPoints res
+  -- need to add 4 to apply pick's theorem
+  -- I have drawn thi out on square paper and i can see that indeed 4 more is needed than the step count
+  -- ut I don't yet fully understand why
+  let exteriorPoints = (sum . map steps $ instructions) + 4
+  let interiorPoints = shoelaceFormula . processAllInstructions $ instructions
+  let area = pickFormula interiorPoints exteriorPoints
+  print area
 
-plotPoints :: State -> IO ()
-plotPoints (State foundPoints _) =
-  let gs = getGridSize . S.toList $ foundPoints
-   in prettyPrintCurve gs
+pickFormula :: Int -> Int -> Int
+pickFormula interiorPoints exteriorPoints = (interiorPoints + exteriorPoints `div` 2) - 1
+
+-- so really we should add a final area contrib but...
+-- either both x1 and x2 will be 0 or both y1 and y2 will be zero since we're dealing with straight lines
+shoelaceFormula :: [(Int, Int)] -> Int
+shoelaceFormula = (`div` 2) . sum . map toAreaUnit . pairs
   where
-    getGridSize :: [Coords] -> GridSize
-    getGridSize =
-      foldl
-        (\(GS minX minY maxX maxY) (x, y) -> GS (min x minX) (min y minY) (max x maxX) (max y maxY))
-        (GS maxBound maxBound minBound minBound)
-    prettyPrintCurve :: GridSize -> IO ()
-    prettyPrintCurve (GS minX minY maxX maxY) =
-      let xCounter = [minX .. maxX]
-          yCounter = [minY .. maxY]
-       in traverse_ putStrLn [[if S.member (x, y) foundPoints then '█' else ' ' | x <- xCounter] | y <- yCounter]
+    toAreaUnit ((x1, y1), (x2, y2)) = (y1 + y2) * (x1 - x2)
 
-processAllInstructions :: [Instruction] -> State
-processAllInstructions = foldl processInstruction (State S.empty (0, 0))
-
-processInstruction :: State -> Instruction -> State
-processInstruction (State ps currentCoords) i =
-  let nePoints = getNewPoints currentCoords i
-      newCoords = getNewCoords currentCoords i
-   in State (S.union ps (S.fromList nePoints)) newCoords
+processAllInstructions :: [Instruction] -> [Coords]
+processAllInstructions = scanl getNewCoords (0, 0)
 
 getNewCoords :: Coords -> Instruction -> Coords
 getNewCoords (x, y) (Ins U steps _) = (x, y - steps)
 getNewCoords (x, y) (Ins D steps _) = (x, y + steps)
 getNewCoords (x, y) (Ins L steps _) = (x - steps, y)
 getNewCoords (x, y) (Ins R steps _) = (x + steps, y)
-
-getNewPoints :: Coords -> Instruction -> [Coords]
-getNewPoints (x, y) (Ins U steps _) = map (\off -> (x, y - off)) [0 .. steps]
-getNewPoints (x, y) (Ins D steps _) = map (\off -> (x, y + off)) [0 .. steps]
-getNewPoints (x, y) (Ins L steps _) = map (\off -> (x - off, y)) [0 .. steps]
-getNewPoints (x, y) (Ins R steps _) = map (\off -> (x + off, y)) [0 .. steps]
 
 -- parsing stuff
 instructionParser :: Parser Instruction
@@ -77,7 +64,7 @@ instructionParser = do
   steps <- intParser
   P.space
   colour <- colourParser
-  return (Ins dir steps colour)
+  return (Ins dir (steps) colour)
   where
     colourParser :: Parser String
     colourParser = P.char '(' *> hexParser <* P.char ')'

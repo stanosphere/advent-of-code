@@ -1,7 +1,7 @@
-module Utils.Grouping (groupMap, groupMapReduce, groupBy') where
+module Utils.Grouping (groupMap, groupMapReduce, groupBy', windows, pairs) where
 
 import Data.Function (on)
-import Data.List (groupBy, sortOn)
+import Data.List (groupBy, sortOn, tails)
 import Data.Map (Map, fromList)
 
 -- inspired by scala function of the same name
@@ -27,3 +27,14 @@ groupBy' f =
     . map (\xs -> (f . head $ xs, xs))
     . groupBy ((==) `on` f)
     . sortOn f
+
+pairs :: [a] -> [(a, a)]
+pairs = map f . windows 2
+  where
+    f :: [a] -> (a, a)
+    f [x1, x2] = (x1, x2)
+    f _ = undefined
+
+-- like scala's `sliding`
+windows :: Int -> [a] -> [[a]]
+windows n = takeWhile ((n ==) . length) . map (take n) . tails
