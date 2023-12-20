@@ -1,6 +1,7 @@
 module Day18 where
 
 import Data.Foldable (traverse_)
+import Data.Set qualified as S (Set, empty, fromList, member, toList, union)
 import Text.Parsec qualified as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 
@@ -13,10 +14,60 @@ data Direction = U | D | L | R deriving (Show)
 
 data Instruction = Ins {dir :: Direction, steps :: Int, colour :: String} deriving (Show)
 
+type Coords = (Int, Int)
+
+data State = State {foundPoints :: S.Set Coords, currentPosition :: Coords}
+
+data GridSize = GS
+  { minX :: Int,
+    minY :: Int,
+    maxX :: Int,
+    maxY :: Int
+  }
+  deriving (Show)
+
 part1 = do
-  inp <- getLines "./fixtures/input18Toy.txt"
+  inp <- getLines "./fixtures/input18.txt"
   let instructions = map parseInstruction inp
-  traverse_ print instructions
+  let res = processAllInstructions instructions
+  plotPoints res
+
+plotPoints :: State -> IO ()
+plotPoints (State foundPoints _) =
+  let gs = getGridSize . S.toList $ foundPoints
+   in prettyPrintCurve gs
+  where
+    getGridSize :: [Coords] -> GridSize
+    getGridSize =
+      foldl
+        (\(GS minX minY maxX maxY) (x, y) -> GS (min x minX) (min y minY) (max x maxX) (max y maxY))
+        (GS maxBound maxBound minBound minBound)
+    prettyPrintCurve :: GridSize -> IO ()
+    prettyPrintCurve (GS minX minY maxX maxY) =
+      let xCounter = [minX .. maxX]
+          yCounter = [minY .. maxY]
+       in traverse_ putStrLn [[if S.member (x, y) foundPoints then '█' else ' ' | x <- xCounter] | y <- yCounter]
+
+processAllInstructions :: [Instruction] -> State
+processAllInstructions = foldl processInstruction (State S.empty (0, 0))
+
+processInstruction :: State -> Instruction -> State
+processInstruction (State ps currentCoords) i =
+  let nePoints = getNewPoints currentCoords i
+      newCoords = getNewCoords currentCoords i
+   in State (S.union ps (S.fromList nePoints)) newCoords
+
+getNewCoords :: Coords -> Instruction -> Coords
+getNewCoords (x, y) (Ins U steps _) = (x, y - steps)
+getNewCoords (x, y) (Ins D steps _) = (x, y + steps)
+getNewCoords (x, y) (Ins L steps _) = (x - steps, y)
+getNewCoords (x, y) (Ins R steps _) = (x + steps, y)
+
+getNewPoints :: Coords -> Instruction -> [Coords]
+getNewPoints (x, y) (Ins U steps _) = map (\off -> (x, y - off)) [0 .. steps]
+getNewPoints (x, y) (Ins D steps _) = map (\off -> (x, y + off)) [0 .. steps]
+getNewPoints (x, y) (Ins L steps _) = map (\off -> (x - off, y)) [0 .. steps]
+getNewPoints (x, y) (Ins R steps _) = map (\off -> (x + off, y)) [0 .. steps]
 
 -- parsing stuff
 instructionParser :: Parser Instruction
