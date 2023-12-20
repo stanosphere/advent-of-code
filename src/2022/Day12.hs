@@ -3,17 +3,10 @@ module Day12 where
 import Data.Bifunctor (second)
 import Data.Char (ord)
 import Data.Foldable (traverse_)
-import Data.Map qualified as M
-  ( Map,
-    filterWithKey,
-    findWithDefault,
-    fromList,
-    lookup,
-    toList,
-  )
+import Data.Map qualified as M (Map, findWithDefault, fromList, lookup, toList)
 import Data.Maybe (mapMaybe)
 import Data.Set qualified as S (Set, fromList)
-import Utils.Dijkstra
+import Utils.Dijkstra (EndNode, StartNode, dijkstra)
 
 data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)
 
@@ -24,24 +17,6 @@ type Edges = M.Map Coords [Coords]
 type Elevation = Int
 
 type Nodes = M.Map Coords Elevation
-
--- data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)
-
--- data Node = Node {coords :: Coords, elevation :: Elevation}
-
--- type Elevation = Int
-
--- type Nodes = M.Map Coords Elevation
-
--- type Edges = M.Map Coords [Coords]
-
--- type StartNode = Coords
-
--- type EndNode = Coords
-
--- data Visitation = Visited | UnVisited deriving (Show, Eq, Ord)
-
--- type TentativeDistances = M.Map Coords (Int, Visitation)
 
 -- 1.56 secs
 -- answer: 380
@@ -56,6 +31,7 @@ part1 = solve startNodeSelector endNodeSelector edgeSelector
         else Nothing
 
 -- 6.39 secs
+-- answer: 375
 part2 :: IO ()
 part2 = solve startNodeSelector endNodeSelector edgeSelector
   where
@@ -66,23 +42,15 @@ part2 = solve startNodeSelector endNodeSelector edgeSelector
         then Just . coords $ candidateToNode
         else Nothing
 
-solve ::
-  (Char -> Bool) -> (Char -> Bool) -> (Node -> Node -> Maybe Coords) -> IO ()
+solve :: (Char -> Bool) -> (Char -> Bool) -> (Node -> Node -> Maybe Coords) -> IO ()
 solve startNodeSelector endNodeSelector edgeSelector = do
   input <- getLines "./fixtures/input12.txt"
-  let (nodes, startNode, endNodes) =
-        getNodes startNodeSelector endNodeSelector input
+  let (nodes, startNode, endNodes) = getNodes startNodeSelector endNodeSelector input
   let edges = getEdges edgeSelector nodes
   let neighbourGetter n = M.findWithDefault [] n edges
-
-  -- could probably use `find` here lol
-  let res =
-        M.filterWithKey (\k (_, v) -> k `elem` endNodes && v == Visited)
-          . head
-          . dropWhile (not . shouldStop endNodes)
-          . dijkstra (const 1) neighbourGetter
-          $ startNode
-  traverse_ print . M.toList $ res
+  let scoreFn = const 1
+  let res = dijkstra scoreFn neighbourGetter endNodes startNode
+  traverse_ print . fmap M.toList $ res
 
 -- so much parsing stuff!
 getEdges :: (Node -> Node -> Maybe Coords) -> Nodes -> Edges

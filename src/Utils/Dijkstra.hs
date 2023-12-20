@@ -1,20 +1,12 @@
-module Utils.Dijkstra where
+module Utils.Dijkstra (dijkstra, StartNode, EndNode) where
 
 -- based on my day 12 2022 implementation
 -- assuming score is always an int but can probs generalise
 -- also should definitely generalise using Coords to just be some note type!
 
 import Data.Bifunctor (second)
-import Data.List.Extra (minimumOn)
-import Data.Map qualified as M
-  ( Map,
-    adjust,
-    alter,
-    filter,
-    lookup,
-    singleton,
-    toList,
-  )
+import Data.List.Extra (find, minimumOn)
+import Data.Map qualified as M (Map, adjust, alter, filter, filterWithKey, lookup, singleton, toList)
 import Data.Set qualified as S (Set, map)
 
 type StartNode nodeId = nodeId
@@ -32,9 +24,14 @@ dijkstra ::
   Ord nodeId =>
   (nodeId -> Int) -> -- scoreFn
   (nodeId -> [nodeId]) -> -- neighbourGetter
+  S.Set (EndNode nodeId) ->
   StartNode nodeId ->
-  [TentativeDistances nodeId]
-dijkstra scoreFn neighbourGetter startNode = iterate (dijkstraStep scoreFn neighbourGetter) dInit
+  Maybe (TentativeDistances nodeId)
+dijkstra scoreFn neighbourGetter endNodes startNode =
+  fmap (M.filterWithKey (\k (_, v) -> k `elem` endNodes && v == Visited))
+    . find (shouldStop endNodes)
+    . iterate (dijkstraStep scoreFn neighbourGetter)
+    $ dInit
   where
     dInit = M.singleton startNode (0, UnVisited)
 
