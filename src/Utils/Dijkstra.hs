@@ -70,19 +70,17 @@ updateNeighbour ::
   TentativeDistances nodeId ->
   nodeId ->
   TentativeDistances nodeId
-updateNeighbour scoreFn currentNodeDistance distanceMap neighbor = alter' alterFn neighbor distanceMap
+updateNeighbour scoreFn currentNodeDistance distanceMap neighbor = M.alter alterFn neighbor distanceMap
   where
     newScore :: Int
     newScore = currentNodeDistance + scoreFn neighbor
 
-    alterFn :: Maybe Int -> Int
-    alterFn (Just i) = min i newScore
-    alterFn Nothing = newScore
-
-    -- like alter but can't delete elements
-    alter' :: Ord k => (Maybe a -> a) -> k -> M.Map k a -> M.Map k a
-    alter' f = M.alter (Just . f)
+    alterFn :: Maybe Int -> Maybe Int
+    alterFn (Just oldScore) = Just (min oldScore newScore)
+    alterFn Nothing = Just newScore
 
 -- I think really this should be more like a queue than having to iterate through a map each time
+-- I think what we really want is something like scala's Sorted set https://www.scala-lang.org/api/2.13.4/scala/collection/SortedSet.html
+-- But for day 12 2022 each part finishes in < 0.2 secs so I think we're good
 getCurrentNode :: TentativeDistances nodeId -> (nodeId, Int)
 getCurrentNode = minimumOn snd . M.toList
