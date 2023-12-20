@@ -18,7 +18,7 @@ type Elevation = Int
 
 type Nodes = M.Map Coords Elevation
 
--- 1.56 secs
+-- 0.17 secs
 -- answer: 380
 part1 :: IO ()
 part1 = solve startNodeSelector endNodeSelector edgeSelector
@@ -30,7 +30,7 @@ part1 = solve startNodeSelector endNodeSelector edgeSelector
         then Just . coords $ candidateToNode
         else Nothing
 
--- 6.39 secs
+-- 0.65 secs
 -- answer: 375
 part2 :: IO ()
 part2 = solve startNodeSelector endNodeSelector edgeSelector

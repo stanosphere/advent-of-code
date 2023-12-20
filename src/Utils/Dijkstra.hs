@@ -28,11 +28,6 @@ type TentativeDistances nodeId = M.Map nodeId Int
 
 type FinalisedDistances nodeId = M.Map nodeId Int
 
--- will become a simple element check I think
--- I think this could be more efficient if I had the lookup happen each time we insert node into map
-shouldStop :: Ord nodeId => S.Set (EndNode nodeId) -> DijkstraState nodeId -> Bool
-shouldStop endNodeCoords ds = any isJust . S.map (\x -> M.lookup x (visited ds)) $ endNodeCoords
-
 dijkstra ::
   Ord nodeId =>
   (nodeId -> Int) -> -- scoreFn
@@ -42,7 +37,7 @@ dijkstra ::
   Maybe (FinalisedDistances nodeId)
 dijkstra scoreFn neighbourGetter endNodes startNode =
   fmap (M.filterWithKey (\k _ -> k `elem` endNodes) . visited)
-    . find (shouldStop endNodes)
+    . find (isFinished)
     . iterate (dijkstraStep scoreFn neighbourGetter endNodes)
     $ dInit
   where
