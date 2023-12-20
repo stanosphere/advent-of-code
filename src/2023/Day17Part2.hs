@@ -1,4 +1,4 @@
-module Day17 where
+module Day17Part2 where
 
 import Data.Char (digitToInt, intToDigit)
 import Data.Foldable (traverse_)
@@ -27,19 +27,26 @@ getGridSize inp = GS ((length . head $ inp) - 1) (length inp - 1)
 
 -- only worth considering immediate neighbours actually
 getValidNeighbours :: GridSize -> Node -> [Node]
-getValidNeighbours gs n = filter (withinBounds gs) (neighbourSameDirection n ++ neighboursOtherDirections n)
+getValidNeighbours gs n =
+  if coords n == (0, 0)
+    then filter (withinBounds gs) (neighboursOtherDirections (Node (0, 0) D 0) ++ neighboursOtherDirections (Node (0, 0) R 0))
+    else filter (withinBounds gs) (neighbourSameDirection n ++ neighboursOtherDirections n)
 
 neighbourSameDirection :: Node -> [Node]
-neighbourSameDirection (Node (x, y) U prevSteps) = [Node (x, y - 1) U (prevSteps + 1) | prevSteps < 3]
-neighbourSameDirection (Node (x, y) D prevSteps) = [Node (x, y + 1) D (prevSteps + 1) | prevSteps < 3]
-neighbourSameDirection (Node (x, y) L prevSteps) = [Node (x - 1, y) L (prevSteps + 1) | prevSteps < 3]
-neighbourSameDirection (Node (x, y) R prevSteps) = [Node (x + 1, y) R (prevSteps + 1) | prevSteps < 3]
+neighbourSameDirection (Node (x, y) U prevSteps) = [Node (x, y - 1) U (prevSteps + 1) | prevSteps < 10]
+neighbourSameDirection (Node (x, y) D prevSteps) = [Node (x, y + 1) D (prevSteps + 1) | prevSteps < 10]
+neighbourSameDirection (Node (x, y) L prevSteps) = [Node (x - 1, y) L (prevSteps + 1) | prevSteps < 10]
+neighbourSameDirection (Node (x, y) R prevSteps) = [Node (x + 1, y) R (prevSteps + 1) | prevSteps < 10]
 
+-- hmm with this sort of teleport I'm missing intermediate heats
+-- so I think the true logic is
+-- if it has prev steps < 4 then it MUST move on and can't turn
+-- otherwise it can either move on or turn
 neighboursOtherDirections :: Node -> [Node]
-neighboursOtherDirections (Node (x, y) U _) = [Node (x - 1, y) L 1, Node (x + 1, y) R 1]
-neighboursOtherDirections (Node (x, y) D _) = [Node (x - 1, y) L 1, Node (x + 1, y) R 1]
-neighboursOtherDirections (Node (x, y) L _) = [Node (x, y - 1) U 1, Node (x, y + 1) D 1]
-neighboursOtherDirections (Node (x, y) R _) = [Node (x, y - 1) U 1, Node (x, y + 1) D 1]
+neighboursOtherDirections (Node (x, y) U _) = [Node (x - 1, y) L 4, Node (x + 1, y) R 1]
+neighboursOtherDirections (Node (x, y) D _) = [Node (x - 1, y) L 4, Node (x + 1, y) R 1]
+neighboursOtherDirections (Node (x, y) L _) = [Node (x, y - 1) U 4, Node (x, y + 1) D 1]
+neighboursOtherDirections (Node (x, y) R _) = [Node (x, y - 1) U 4, Node (x, y + 1) D 1]
 
 withinBounds :: GridSize -> Node -> Bool
 withinBounds (GS maxX maxY) (Node (x, y) _ _) = x >= 0 && x <= maxX && y >= 0 && y <= maxY
@@ -52,11 +59,8 @@ prettyPrintSymbolMap size mp =
   let counter = [0 .. size]
    in traverse_ putStrLn [[intToDigit (mp M.! (x, y)) | x <- counter] | y <- counter]
 
--- this takes a good while to run
--- I think it's because I'm creating loads and loads of nodes when i don't necessarily need to
--- lke the node type has many inhabitants
 part1 = do
-  x <- getLines "./fixtures/input17.txt"
+  x <- getLines "./fixtures/input17Toy.txt"
   let nodeMap = getSymbolCoords x
   let gridSize = getGridSize x
   let res = solve nodeMap gridSize

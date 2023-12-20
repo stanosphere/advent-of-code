@@ -1,4 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Utils.Dijkstra (dijkstra, StartNode, EndNode, DijkstraState) where
 
