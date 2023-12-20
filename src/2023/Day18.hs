@@ -1,5 +1,6 @@
 module Day18 where
 
+import Numeric (readHex)
 import Text.Parsec qualified as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 import Utils.Grouping (pairs)
@@ -18,17 +19,20 @@ data Instruction = Ins {dir :: Direction, steps :: Int, colour :: String} derivi
 
 type Coords = (Int, Int)
 
-data GridSize = GS
-  { minX :: Int,
-    minY :: Int,
-    maxX :: Int,
-    maxY :: Int
-  }
-  deriving (Show)
-
 part1 = do
   inp <- getLines "./fixtures/input18.txt"
-  let instructions = map parseInstruction inp
+  let instructions = map (unsafeParse instructionParser) inp
+  -- need to add 4 to apply pick's theorem
+  -- I have drawn thi out on square paper and i can see that indeed 4 more is needed than the step count
+  -- ut I don't yet fully understand why
+  let exteriorPoints = (sum . map steps $ instructions) + 4
+  let interiorPoints = shoelaceFormula . processAllInstructions $ instructions
+  let area = pickFormula interiorPoints exteriorPoints
+  print area
+
+part2 = do
+  inp <- getLines "./fixtures/input18.txt"
+  let instructions = map (unsafeParse instructionParser') inp
   -- need to add 4 to apply pick's theorem
   -- I have drawn thi out on square paper and i can see that indeed 4 more is needed than the step count
   -- ut I don't yet fully understand why
@@ -56,6 +60,44 @@ getNewCoords (x, y) (Ins D steps _) = (x, y + steps)
 getNewCoords (x, y) (Ins L steps _) = (x - steps, y)
 getNewCoords (x, y) (Ins R steps _) = (x + steps, y)
 
+instructionParser' :: Parser Instruction
+instructionParser' = do
+  _ <- directionParser
+  P.space
+  _ <- intParser
+  P.space
+  colour <- colourParser
+  return . colourToInstruction $ colour
+  where
+    colourParser :: Parser String
+    colourParser = P.char '(' *> hexParser <* P.char ')'
+
+    intParser :: Parser Int
+    intParser = read <$> P.many1 P.digit
+
+    hexParser :: Parser String
+    hexParser = P.char '#' *> P.many1 (P.oneOf "abcdef0123456789")
+
+    directionParser :: Parser Direction
+    directionParser = (U <$ P.char 'U') <|> (D <$ P.char 'D') <|> (L <$ P.char 'L') <|> (R <$ P.char 'R')
+
+    -- Each hexadecimal code is six hexadecimal digits long.
+    -- The first five hexadecimal digits encode the distance in meters as a five-digit hexadecimal number.
+    -- The last hexadecimal digit encodes the direction to dig: 0 means R, 1 means D, 2 means L, and 3 means U.
+    colourToInstruction :: String -> Instruction
+    colourToInstruction h =
+      let steps = readHex' . take 5 $ h
+          dir = case h !! 5 of
+            '0' -> R
+            '1' -> D
+            '2' -> L
+            '3' -> U
+            _ -> undefined
+       in Ins dir steps h
+
+    readHex' :: String -> Int
+    readHex' = fst . head . readHex
+
 -- parsing stuff
 instructionParser :: Parser Instruction
 instructionParser = do
@@ -64,7 +106,7 @@ instructionParser = do
   steps <- intParser
   P.space
   colour <- colourParser
-  return (Ins dir (steps) colour)
+  return (Ins dir steps colour)
   where
     colourParser :: Parser String
     colourParser = P.char '(' *> hexParser <* P.char ')'
@@ -82,9 +124,6 @@ unsafeParse :: Parser a -> String -> a
 unsafeParse p s = case parse p "whatever" s of
   Left res -> error . show $ res
   Right res -> res
-
-parseInstruction :: String -> Instruction
-parseInstruction = unsafeParse instructionParser
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
