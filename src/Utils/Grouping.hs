@@ -1,3 +1,4 @@
+-- this module is essentially Scala functions related to grouping that I find useful implemented in Haskell
 module Utils.Grouping (groupMap, groupMapReduce, groupBy', windows, pairs) where
 
 import Data.Function (on)
@@ -28,6 +29,8 @@ groupBy' f =
     . groupBy ((==) `on` f)
     . sortOn f
 
+-- special case of scala's sliding
+-- maybe it should be called `slidingPairs` actually
 pairs :: [a] -> [(a, a)]
 pairs = map f . windows 2
   where
@@ -36,5 +39,6 @@ pairs = map f . windows 2
     f _ = undefined
 
 -- like scala's `sliding`
+-- works on infinite lists and everything
 windows :: Int -> [a] -> [[a]]
 windows n = takeWhile ((n ==) . length) . map (take n) . tails

@@ -102,8 +102,8 @@ type State = ([Node], Int)
 -- and 700 * 700 * 50 is 24,500,000 so that's quite a few iterations but nothing toooo bad I don't think
 -- also I'm going to assume the region is contiguous, IDK if it will be IRL!!!
 -- there MUST be a way of determining if a set of lattice points are contiguous though
----- I guess there's always the classic connected components approach that will work on any graph
----- but I reckon there might be a nice way for a given metric (e.g. euclidian or manhatten)
+-- -- I guess there's always the classic connected components approach that will work on any graph
+-- -- but I reckon there might be a nice way for a given metric (e.g. euclidean or manhattan)
 -- answer is 42123, runs in 13.56 secs
 part2 :: IO ()
 part2 = do
