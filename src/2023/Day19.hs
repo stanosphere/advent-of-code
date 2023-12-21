@@ -34,19 +34,6 @@ part1 = do
 
   print res
 
--- oh dear
--- so part 2 is very similar to that really scary interval one from day 5
--- maybe I can use similar logic...
--- brute force definitely won't work: we'd need 256 trillion iterations
--- -- and each iteration itself could potentially be quite long: could potentially go through many workflows
--- -- and my rule of thumb is usually a billion is too many, so this is like _way_ too many
--- I think something along the lines of you start with a type called Part'
--- -- it's identical to Part except it uses intervals
--- -- and then it's a case of following the rules and splitting it up into intervals
--- -- so let's say a rule is "a < 300" you'd like make another Part' which has interval like 0 -> 299 and send it to the relevant WF
--- -- and the rest (i.e. 300 -> 4000)
--- I think this is different enough that I'll just do it in a new file
-
 sumRatingNumbers :: Part -> Int
 sumRatingNumbers = sum . M.elems
 

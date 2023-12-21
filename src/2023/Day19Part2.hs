@@ -1,16 +1,14 @@
-{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-partial-fields #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
-{-# HLINT ignore "Use <$>" #-}
 {-# HLINT ignore "Use tuple-section" #-}
+{-# HLINT ignore "Use <$>" #-}
 
 module Day19Part2 where
 
-import Data.Foldable (traverse_)
 import Data.List.Extra (splitOn)
 import Data.Map qualified as M (Map, adjust, elems, fromList, (!))
-import Data.Maybe (mapMaybe, maybeToList)
+import Data.Maybe (maybeToList)
 import Text.Parsec qualified as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 
@@ -42,12 +40,13 @@ data Condition = Cond {partType :: Char, op :: Op, comparator :: Int} | Default 
 -- -- and the rest (i.e. 300 -> 4000)
 -- I think this is different enough that I'll just do it in a new file
 
+part2 :: IO Int
 part2 = do
   rawInput <- getLines "./fixtures/input19.txt"
   let rawWorkflows = head . splitOn [""] $ rawInput
   let workflows = M.fromList . map ((\wf -> (wfId wf, wf)) . unsafeParse workFlowParser) $ rawWorkflows
   let res = solve workflows
-  print res
+  return res
 
 -- start in workflow named in
 solve :: M.Map String WorkFlow -> Int
@@ -111,10 +110,6 @@ applyRuleToPart (Rule (Cond pType LessThan comp) dest) p
     partInterval = p M.! pType
     passing = M.adjust (\(Interval lo _) -> Interval lo (comp - 1)) pType p
     failing = M.adjust (\(Interval _ hi) -> Interval comp hi) pType p
-
--- don't think I need this actually
-isWithinInterval :: Interval -> Int -> Bool
-isWithinInterval (Interval lo hi) i = lo <= i && i <= hi
 
 isOnLeftOfInterval :: Interval -> Int -> Bool
 isOnLeftOfInterval (Interval lo _) i = i <= lo
