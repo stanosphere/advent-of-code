@@ -21,6 +21,10 @@ Happy Haskelling my future self!
 
 ## TODO
 
+- Add a little script to just run any day
+  - Should output time as well as answer
+  - I guess it'd have to look for functions called `part1` and `part2` in files called `DayX` and `DayXPart2`?
+  - I've not been entirely consistent with my naming conventions have I lol
 - Reading input is basically always the same so maybe only define it once
 - Maybe make a parsing utils file
   - For example `intParser` is used all over the place
@@ -44,6 +48,7 @@ Happy Haskelling my future self!
   - It's still abysmally slow for Day 17 2023 so see if there's anything you can do there
     - I suspect I'm generating too many edges and nodes so there might be a nice trick I can do
     - I guess what I'm saying is maybe my dijkstra implementation is kinda fine, it just needs to be passed in a nicer structure
+  - Could make it into a gist maybe?
 
 
 
@@ -51,7 +56,7 @@ Happy Haskelling my future self!
 
 ### Parsing
 
-- I started trying to use Pasec properly in Day 2 of 2023
-- I read (this)[https://jsdw.me/posts/haskell-parsec-basics/] for inspiration, was quite helpful!
+- I started trying to use Parsec properly in Day 2 of 2023
+- I read [this](https://jsdw.me/posts/haskell-parsec-basics/) for inspiration, was quite helpful!
 - I've gone back and parsecified some of the older solutions
 - But sometimes all you really need is `chunksOf` and `splitOn` and things like that so I usually leave those alone
