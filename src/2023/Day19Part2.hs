@@ -43,7 +43,7 @@ data Condition = Cond {partType :: Char, op :: Op, comparator :: Int} | Default 
 -- I think this is different enough that I'll just do it in a new file
 
 part2 = do
-  rawInput <- getLines "./fixtures/input19Toy.txt"
+  rawInput <- getLines "./fixtures/input19.txt"
   let rawWorkflows = head . splitOn [""] $ rawInput
   let workflows = M.fromList . map ((\wf -> (wfId wf, wf)) . unsafeParse workFlowParser) $ rawWorkflows
   let res = solve workflows
@@ -56,14 +56,14 @@ solve wfs = fst (applyWorkFlows' wfs (0, [(ToWorkFlow "in", initialPart)]))
     initialInterval = Interval 1 4000
     initialPart = M.fromList . map (\c -> (c, initialInterval)) $ "xmas"
 
---   where
+-- recursive boi
 applyWorkFlows' :: M.Map String WorkFlow -> (Int, [(Destination, Part)]) -> (Int, [(Destination, Part)])
 applyWorkFlows' _ (i, []) = (i, [])
 applyWorkFlows' mp (i, stuff) =
   let x = map (applyWorkFlowToPartV2 mp) stuff
       i' = i + (sum . map fst $ x)
       stuff' = concatMap snd x
-   in (i', stuff')
+   in applyWorkFlows' mp (i', stuff')
 
 -- basically just a wrapper on the "normal" version of this function
 applyWorkFlowToPartV2 :: M.Map String WorkFlow -> (Destination, Part) -> (Int, [(Destination, Part)])
@@ -78,7 +78,7 @@ applyWorkFlowToPart wf p =
    in (acceptCount, furtherWorkflows)
 
 sumRatingNumbers :: Part -> Int
-sumRatingNumbers = sum . map getSize . M.elems
+sumRatingNumbers = product . map getSize . M.elems
 
 getSize :: Interval -> Int
 getSize (Interval lo hi) = hi - lo + 1
@@ -121,22 +121,6 @@ isOnLeftOfInterval (Interval lo _) i = i <= lo
 
 isOnRightOfInterval :: Interval -> Int -> Bool
 isOnRightOfInterval (Interval _ hi) i = i >= hi
-
--- start in workflow named in
--- applyWorkFlows :: M.Map String WorkFlow -> Part -> Destination
--- applyWorkFlows wfs p = applyWorkFlows' (ToWorkFlow "in")
---   where
---     applyWorkFlows' :: Destination -> Destination
---     applyWorkFlows' (ToWorkFlow d) = applyWorkFlows' (applyWorkFlow p (wfs M.! d))
---     applyWorkFlows' dest = dest
-
--- applyWorkFlow :: Part -> WorkFlow -> Destination
--- applyWorkFlow part (WF _ rules) = head . mapMaybe applyRule $ rules
---   where
---     applyRule (Rule condition destination) =
---       if conditionToFunction condition part
---         then Just destination
---         else Nothing
 
 -- lots of parsing for this one!
 unsafeParse :: Parser a -> String -> a
