@@ -19,8 +19,6 @@ data GridSize = GS
   }
   deriving (Show)
 
-data State = State
-
 -- inclusive
 getGridSize :: [String] -> GridSize
 getGridSize inp = GS ((length . head $ inp) - 1) (length inp - 1)

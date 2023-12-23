@@ -38,8 +38,14 @@ data Condition = Cond {partType :: Char, op :: Op, comparator :: Int} | Default 
 -- -- and then it's a case of following the rules and splitting it up into intervals
 -- -- so let's say a rule is "a < 300" you'd like make another Part' which has interval like 0 -> 299 and send it to the relevant WF
 -- -- and the rest (i.e. 300 -> 4000)
--- I think this is different enough that I'll just do it in a new file
+-- I think this is different enough that I'll just do it in a new file (i.e. this file)
+-- after much drawing I eventually came up with this rather pattern-matchy answer
 
+-- I suppose I could implement part1 using `solve` by passing in the parts in my interval structure
+-- rather than creating the seed part within the function
+
+-- 0.04 secs
+-- 124831893423809
 part2 :: IO Int
 part2 = do
   rawInput <- getLines "./fixtures/input19.txt"
@@ -57,12 +63,12 @@ solve wfs = fst (applyWorkFlows' wfs (0, [(ToWorkFlow "in", initialPart)]))
 
 -- recursive boi
 applyWorkFlows' :: M.Map String WorkFlow -> (Int, [(Destination, Part)]) -> (Int, [(Destination, Part)])
-applyWorkFlows' _ (i, []) = (i, [])
-applyWorkFlows' mp (i, stuff) =
-  let x = map (applyWorkFlowToPartV2 mp) stuff
-      i' = i + (sum . map fst $ x)
-      stuff' = concatMap snd x
-   in applyWorkFlows' mp (i', stuff')
+applyWorkFlows' _ (count, []) = (count, [])
+applyWorkFlows' mp (count, partsToProcess) = (count', partsToProcess')
+  where
+    res = map (applyWorkFlowToPartV2 mp) partsToProcess
+    count' = (+ count) . sum . map fst $ res
+    partsToProcess' = concatMap snd res
 
 -- basically just a wrapper on the "normal" version of this function
 applyWorkFlowToPartV2 :: M.Map String WorkFlow -> (Destination, Part) -> (Int, [(Destination, Part)])
@@ -70,11 +76,15 @@ applyWorkFlowToPartV2 mp (ToWorkFlow wId, p) = applyWorkFlowToPart (mp M.! wId) 
 applyWorkFlowToPartV2 _ _ = undefined
 
 applyWorkFlowToPart :: WorkFlow -> Part -> (Int, [(Destination, Part)])
-applyWorkFlowToPart wf p =
-  let blah = applyRulesToPart (rules wf) p
-      acceptCount = sum . map (sumRatingNumbers . snd) . filter ((== Accept) . fst) $ blah
-      furtherWorkflows = filter (\(dest, _) -> dest /= Accept && dest /= Reject) blah
-   in (acceptCount, furtherWorkflows)
+applyWorkFlowToPart wf p = (acceptCount, furtherWorkflows)
+  where
+    res = applyRulesToPart (rules wf) p
+    acceptCount = sum . map (sumRatingNumbers . snd) . filter ((== Accept) . fst) $ res
+    furtherWorkflows = filter (isWorkflowDest . fst) res
+
+isWorkflowDest :: Destination -> Bool
+isWorkflowDest (ToWorkFlow _) = True
+isWorkflowDest _ = False
 
 sumRatingNumbers :: Part -> Int
 sumRatingNumbers = product . map getSize . M.elems

@@ -25,6 +25,9 @@ data Op = GreaterThan | LessThan deriving (Show)
 
 data Condition = Cond {partType :: Char, op :: Op, comparator :: Int} | Default deriving (Show)
 
+-- 350678
+-- 0.04 secs
+part1 :: IO Int
 part1 = do
   rawInput <- getLines "./fixtures/input19.txt"
   let [rawWorkflows, rawParts] = splitOn [""] rawInput
@@ -32,7 +35,7 @@ part1 = do
   let parts = map (unsafeParse partParser) rawParts
   let res = sum . map sumRatingNumbers . filter ((== Accept) . applyWorkFlows workflows) $ parts
 
-  print res
+  return res
 
 sumRatingNumbers :: Part -> Int
 sumRatingNumbers = sum . M.elems
