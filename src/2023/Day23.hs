@@ -1,59 +1,103 @@
 module Day23 where
 
-import Data.Foldable (traverse_)
-import Data.Map qualified as M (Map, findWithDefault, fromList, lookup)
-import Data.Maybe (mapMaybe)
-import Utils.Dijkstra (EndNode, StartNode, dijkstra)
+import Data.Foldable (find, traverse_)
+import Data.Map qualified as M
+import Data.Maybe (catMaybes)
 
 type Coords = (Int, Int)
 
-type NodeMap = M.Map Coords Char
+data Tile = Free | SlopeUp | SlopeDown | SlopeLeft | SlopeRight deriving (Eq, Show)
 
-data Node = Node {coords :: Coords, symbol :: Char} deriving (Eq, Ord, Show)
+type Grid = M.Map Coords Tile
 
--- I suspect I'm not properly capturing the no-backtrack condition...
+type Path = [Coords]
 
-getValidNeighbours :: NodeMap -> Node -> [Node]
-getValidNeighbours nm (Node (x, y) '.') = mapMaybe (getNode nm) [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
-getValidNeighbours nm (Node (x, y) '<') = mapMaybe (getNode nm) [(x - 1, y)]
-getValidNeighbours nm (Node (x, y) '>') = mapMaybe (getNode nm) [(x + 1, y)]
-getValidNeighbours nm (Node (x, y) '^') = mapMaybe (getNode nm) [(x, y - 1)]
-getValidNeighbours nm (Node (x, y) 'v') = mapMaybe (getNode nm) [(x, y + 1)]
-getValidNeighbours _ _ = undefined
+data State = State {unfinished :: [Path], finished :: [Path]} deriving (Show)
 
-getNode :: NodeMap -> Coords -> Maybe Node
+-- 2358
+part1 :: IO (Maybe Int)
+part1 = do
+  grid <- getGrid <$> getLines "./fixtures/input23.txt"
+  return . solve $ grid
+
+solve :: Grid -> Maybe Int
+solve grid =
+  fmap (maximum . map ((\x -> x - 1) . length) . finished) . find (null . unfinished) . iterate (step grid realEnd) $ initState
+  where
+    toyEnd = (21, 22)
+    realEnd = (139, 140)
+    initState = State [[(1, 0)]] []
+
+initState :: Coords -> [Coords]
+initState coords = [coords]
+
+step :: Grid -> Coords -> State -> State
+step g endCoords (State unfinished finished) =
+  let stepped = concatMap (stepPath g) unfinished
+      newFinished = filter (\p -> head p == endCoords) stepped
+      newUnfinished = filter (\p -> head p /= endCoords) stepped
+   in State newUnfinished (finished ++ newFinished)
+
+stepPath :: Grid -> Path -> [Path]
+stepPath g p = map (: p) . filterNeighbours p . getNeighbours g coords $ tile
+  where
+    coords = head p
+    tile = g M.! coords
+
+getNode :: Grid -> Coords -> Maybe Coords
 getNode nm coords = case M.lookup coords nm of
-  Just c -> Just (Node coords c)
+  Just _ -> Just (coords)
   Nothing -> Nothing
 
-getSymbolCoords :: [String] -> NodeMap
-getSymbolCoords inp = M.fromList [((x, y), c) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 ..] xs, c /= '#']
+getRightNode :: Grid -> Coords -> Maybe Coords
+getRightNode nm coords = case M.lookup coords nm of
+  Just SlopeLeft -> Nothing
+  Just _ -> Just (coords)
+  Nothing -> Nothing
 
-prettyPrintSymbolMap :: Int -> NodeMap -> IO ()
-prettyPrintSymbolMap size mp =
-  let counter = [0 .. size]
-   in traverse_ putStrLn [[M.findWithDefault ' ' (x, y) mp | x <- counter] | y <- counter]
+getLeftNode :: Grid -> Coords -> Maybe Coords
+getLeftNode nm coords = case M.lookup coords nm of
+  Just SlopeRight -> Nothing
+  Just _ -> Just (coords)
+  Nothing -> Nothing
 
-part1 = do
-  x <- getLines "./fixtures/input23Toy.txt"
-  let nodeMap = getSymbolCoords x
-  let res = solve nodeMap
-  print res
+getUpNode :: Grid -> Coords -> Maybe Coords
+getUpNode nm coords = case M.lookup coords nm of
+  Just SlopeDown -> Nothing
+  Just _ -> Just (coords)
+  Nothing -> Nothing
 
-solve :: NodeMap -> Maybe (EndNode Node, Int)
-solve nm = dijkstra scoreFn neighbourGetter isEndNode startNode
-  where
-    scoreFn :: Node -> Int
-    scoreFn = const (-1)
-    neighbourGetter :: Node -> [Node]
-    neighbourGetter = getValidNeighbours nm
-    isEndNode :: Node -> Bool
-    isEndNode = isEndNode'
-    startNode :: StartNode Node
-    startNode = Node (1, 0) '.'
+getDownNode :: Grid -> Coords -> Maybe Coords
+getDownNode nm coords = case M.lookup coords nm of
+  Just SlopeUp -> Nothing
+  Just _ -> Just (coords)
+  Nothing -> Nothing
 
-isEndNode' :: Node -> Bool
-isEndNode' (Node (x, y) _) = x == 21 && y == 22
+filterNeighbours :: Path -> [Coords] -> [Coords]
+filterNeighbours p = filter (`notElem` p)
+
+getNeighbours :: Grid -> Coords -> Tile -> [Coords]
+getNeighbours g (x, y) Free = catMaybes [getLeftNode g (x - 1, y), getRightNode g (x + 1, y), getDownNode g (x, y + 1), getUpNode g (x, y - 1)]
+getNeighbours g (x, y) SlopeLeft = catMaybes [getLeftNode g (x - 1, y)]
+getNeighbours g (x, y) SlopeRight = catMaybes [getRightNode g (x + 1, y)]
+getNeighbours g (x, y) SlopeUp = catMaybes [getUpNode g (x, y - 1)]
+getNeighbours g (x, y) SlopeDown = catMaybes [getDownNode g (x, y + 1)]
+
+getGrid :: [String] -> Grid
+getGrid inp = M.fromList [((x, y), toTile c) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 ..] xs, c /= '#']
+
+toTile :: Char -> Tile
+toTile '<' = SlopeLeft
+toTile '>' = SlopeRight
+toTile '^' = SlopeUp
+toTile 'v' = SlopeDown
+toTile '.' = Free
+toTile _ = undefined
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
+
+prettyPrintSymbolMap :: Int -> [Coords] -> IO ()
+prettyPrintSymbolMap size mp =
+  let counter = [0 .. size]
+   in traverse_ putStrLn [[if (x, y) `elem` mp then '0' else ' ' | x <- counter] | y <- counter]
