@@ -11,6 +11,8 @@ type NodeMap = M.Map Coords Char
 
 data Node = Node {coords :: Coords, symbol :: Char} deriving (Eq, Ord, Show)
 
+-- I suspect I'm not properly capturing the no-backtrack condition...
+
 getValidNeighbours :: NodeMap -> Node -> [Node]
 getValidNeighbours nm (Node (x, y) '.') = mapMaybe (getNode nm) [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
 getValidNeighbours nm (Node (x, y) '<') = mapMaybe (getNode nm) [(x - 1, y)]
