@@ -14,6 +14,9 @@ type Path = [Coords]
 
 data State = State {unfinished :: [Path], finished :: [Path]} deriving (Show)
 
+-- curiously dijkstra works well for the to input in part 2 but not the real input
+-- probably either not honouring the "no going back" condition or something wrong with my dijkstra
+
 -- 2358
 part1 :: IO (Maybe Int)
 part1 = do
