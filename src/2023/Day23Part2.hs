@@ -67,24 +67,24 @@ getGrid inp = S.fromList [(x, y) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 .
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
 
-data Path = Path {current :: Coords, nodes :: S.Set Coords}
+type Path = (Coords, S.Set Coords)
 
 solve :: Graph -> Coords -> Coords -> Int
 solve nodeMap startNode endNode = maximum . findPaths nodeMap endNode $ initialPath
   where
-    initialPath = Path startNode (S.singleton startNode)
+    initialPath = (startNode, (S.singleton startNode))
 
 -- this is from https://github.com/GuillaumedeVolpiano/adventOfCode/blob/master/2023/days/Day23.hs
 -- It's better than what I had for my path finding but I don't yet understand why
 -- I've simplified it slightly (use [Int] rather than [Maybe Int] for return type)
 findPaths :: Graph -> Coords -> Path -> [Int]
-findPaths graph endNode path
-  | current path == endNode = [0]
+findPaths graph endNode (current, nodes)
+  | current == endNode = [0]
   | null neighbours = []
   | otherwise =
       concatMap
         (\(node, score) -> map (score +) . findPaths graph endNode . updatePath $ node)
         neighbours
   where
-    neighbours = filter (\(c, _) -> S.notMember c (nodes path)) . (graph M.!) . current $ path
-    updatePath n = Path n (S.insert n (nodes path))
+    neighbours = filter (\(c, _) -> S.notMember c (nodes)) . (graph M.!) $ current
+    updatePath n = (n, (S.insert n (nodes)))
