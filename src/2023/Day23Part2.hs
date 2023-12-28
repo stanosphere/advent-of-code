@@ -1,9 +1,8 @@
 module Day23Part2 where
 
-import Data.Foldable (find, traverse_)
 import Data.Map qualified as M
 import Data.Set qualified as S
-import Utils.Grouping (groupBy', groupMap)
+import Utils.Grouping (groupMap)
 
 type Coords = (Int, Int)
 
@@ -17,14 +16,18 @@ data Edge = Edge {from :: Coords, to :: Coords, score :: Int} deriving (Show)
 -- as I said before it could well be a flaw in my implementation of dijkstra
 -- I'll just do a "normal" search then
 
--- 2738 is too low
+-- 6586
+part2 :: IO Int
 part2 = do
-  grid <- getGrid <$> getLines "./fixtures/input23Toy.txt"
+  grid <- getGrid <$> getLines "./fixtures/input23.txt"
   let startNode :: Coords = (1, 0)
-  let endNode :: Coords = (21, 22) -- real end is (139, 140)
+  let endNode :: Coords = (139, 140) -- real end is (139, 140); fake is (21, 22)
   let graph = buildGraph grid startNode endNode
-  let res = solve graph endNode
-  print res
+  let res = solve graph startNode endNode
+  return res
+
+showEdge :: Edge -> String
+showEdge (Edge from to _) = show from ++ " " ++ show to
 
 buildGraph :: Grid -> Coords -> Coords -> Graph
 buildGraph g startNode endNode =
@@ -64,31 +67,24 @@ getGrid inp = S.fromList [(x, y) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 .
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
 
-data Path = Path {current :: Coords, rest :: S.Set Coords, size :: Int} deriving (Show)
+data Path = Path {current :: Coords, nodes :: S.Set Coords}
 
-data State = State {unfinished :: [Path], finished :: [Path]} deriving (Show)
-
--- -- solve :: Graph -> Coords -> Maybe Int
--- solve grid endNode =
---   iterate (step grid endNode) $ initState
---   where
---     initState = State [Path (1, 0) S.empty 0] []
-
-solve :: Graph -> Coords -> Maybe Int
-solve grid endNode =
-  fmap (maximum . map (size) . finished) . find (null . unfinished) . iterate (step grid endNode) $ initState
+solve :: Graph -> Coords -> Coords -> Int
+solve nodeMap startNode endNode = maximum . findPaths nodeMap endNode $ initialPath
   where
-    initState = State [Path (1, 0) S.empty 0] []
+    initialPath = Path startNode (S.singleton startNode)
 
-step :: Graph -> Coords -> State -> State
-step g endCoords (State unfinished finished) =
-  let stepped = concatMap (stepPath g) unfinished
-      newFinished = filter (\p -> current p == endCoords) stepped
-      newUnfinished = filter (\p -> current p /= endCoords) stepped
-   in State newUnfinished (finished ++ newFinished)
-
-stepPath :: Graph -> Path -> [Path]
-stepPath g p = map (appendPath p) . filter (\(c, _) -> S.notMember c (rest p)) . (g M.!) . current $ p
-
-appendPath :: Path -> (Coords, Int) -> Path
-appendPath (Path prev rest len) (c, i) = Path c (S.insert prev rest) (len + i)
+-- this is from https://github.com/GuillaumedeVolpiano/adventOfCode/blob/master/2023/days/Day23.hs
+-- It's better than what I had for my path finding but I don't yet understand why
+-- I've simplified it slightly (use [Int] rather than [Maybe Int] for return type)
+findPaths :: Graph -> Coords -> Path -> [Int]
+findPaths graph endNode path
+  | current path == endNode = [0]
+  | null neighbours = []
+  | otherwise =
+      concatMap
+        (\(node, score) -> map (score +) . findPaths graph endNode . updatePath $ node)
+        neighbours
+  where
+    neighbours = filter (\(c, _) -> S.notMember c (nodes path)) . (graph M.!) . current $ path
+    updatePath n = Path n (S.insert n (nodes path))
