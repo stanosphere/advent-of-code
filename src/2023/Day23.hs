@@ -2,7 +2,7 @@ module Day23 where
 
 import Data.Foldable (find, traverse_)
 import Data.Map qualified as M
-import Data.Maybe (catMaybes)
+import Data.Maybe (mapMaybe)
 
 type Coords = (Int, Int)
 
@@ -18,6 +18,7 @@ data State = State {unfinished :: [Path], finished :: [Path]} deriving (Show)
 -- probably either not honouring the "no going back" condition or something wrong with my dijkstra
 
 -- 2358
+-- 3.07 secs
 part1 :: IO (Maybe Int)
 part1 = do
   grid <- getGrid <$> getLines "./fixtures/input23.txt"
@@ -30,9 +31,6 @@ solve grid =
     toyEnd = (21, 22)
     realEnd = (139, 140)
     initState = State [[(1, 0)]] []
-
-initState :: Coords -> [Coords]
-initState coords = [coords]
 
 step :: Grid -> Coords -> State -> State
 step g endCoords (State unfinished finished) =
@@ -49,42 +47,42 @@ stepPath g p = map (: p) . filterNeighbours p . getNeighbours g coords $ tile
 
 getNode :: Grid -> Coords -> Maybe Coords
 getNode nm coords = case M.lookup coords nm of
-  Just _ -> Just (coords)
+  Just _ -> Just coords
   Nothing -> Nothing
 
 getRightNode :: Grid -> Coords -> Maybe Coords
-getRightNode nm coords = case M.lookup coords nm of
+getRightNode nm (x, y) = case M.lookup (x + 1, y) nm of
   Just SlopeLeft -> Nothing
-  Just _ -> Just (coords)
+  Just _ -> Just (x + 1, y)
   Nothing -> Nothing
 
 getLeftNode :: Grid -> Coords -> Maybe Coords
-getLeftNode nm coords = case M.lookup coords nm of
+getLeftNode nm (x, y) = case M.lookup (x - 1, y) nm of
   Just SlopeRight -> Nothing
-  Just _ -> Just (coords)
+  Just _ -> Just (x - 1, y)
   Nothing -> Nothing
 
 getUpNode :: Grid -> Coords -> Maybe Coords
-getUpNode nm coords = case M.lookup coords nm of
+getUpNode nm (x, y) = case M.lookup (x, y - 1) nm of
   Just SlopeDown -> Nothing
-  Just _ -> Just (coords)
+  Just _ -> Just (x, y - 1)
   Nothing -> Nothing
 
 getDownNode :: Grid -> Coords -> Maybe Coords
-getDownNode nm coords = case M.lookup coords nm of
+getDownNode nm (x, y) = case M.lookup (x, y + 1) nm of
   Just SlopeUp -> Nothing
-  Just _ -> Just (coords)
+  Just _ -> Just (x, y + 1)
   Nothing -> Nothing
 
 filterNeighbours :: Path -> [Coords] -> [Coords]
 filterNeighbours p = filter (`notElem` p)
 
 getNeighbours :: Grid -> Coords -> Tile -> [Coords]
-getNeighbours g (x, y) Free = catMaybes [getLeftNode g (x - 1, y), getRightNode g (x + 1, y), getDownNode g (x, y + 1), getUpNode g (x, y - 1)]
-getNeighbours g (x, y) SlopeLeft = catMaybes [getLeftNode g (x - 1, y)]
-getNeighbours g (x, y) SlopeRight = catMaybes [getRightNode g (x + 1, y)]
-getNeighbours g (x, y) SlopeUp = catMaybes [getUpNode g (x, y - 1)]
-getNeighbours g (x, y) SlopeDown = catMaybes [getDownNode g (x, y + 1)]
+getNeighbours g coords Free = mapMaybe ($ coords) [getLeftNode g, getRightNode g, getDownNode g, getUpNode g]
+getNeighbours g coords SlopeLeft = mapMaybe ($ coords) [getLeftNode g]
+getNeighbours g coords SlopeRight = mapMaybe ($ coords) [getRightNode g]
+getNeighbours g coords SlopeUp = mapMaybe ($ coords) [getUpNode g]
+getNeighbours g coords SlopeDown = mapMaybe ($ coords) [getDownNode g]
 
 getGrid :: [String] -> Grid
 getGrid inp = M.fromList [((x, y), toTile c) | (y, xs) <- zip [0 ..] inp, (x, c) <- zip [0 ..] xs, c /= '#']
