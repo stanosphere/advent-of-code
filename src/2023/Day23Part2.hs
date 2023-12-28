@@ -7,9 +7,7 @@ type Coords = (Int, Int)
 
 type Grid = S.Set Coords
 
-data Path = Path {current :: Coords, rest :: S.Set Coords} deriving (Show)
-
-data State = State {unfinished :: [Path], finished :: [Path]} deriving (Show)
+data Edge = Edge {from :: Coords, to :: Coords, score :: Int} deriving (Show)
 
 -- curiously dijkstra works well for the to input in part 2 but not the real input
 -- probably either not honouring the "no going back" condition or something wrong with my dijkstra
@@ -30,12 +28,38 @@ data State = State {unfinished :: [Path], finished :: [Path]} deriving (Show)
 -- and maybe my naive approach used in part 1 will just work...
 
 part2 = do
-  grid <- getGrid <$> getLines "./fixtures/input23.txt"
+  grid <- getGrid <$> getLines "./fixtures/input23Toy.txt"
   let allPoints = S.toList grid
   let junctions = filter (isJunction grid) allPoints
-  let blah = map (\j -> (j, length . getNeighbours grid $ j)) junctions
-  print blah
-  print . S.size $ grid
+  let startNode :: Coords = (1, 0)
+  let endNode :: Coords = (21, 22) -- real end is (139, 140)
+  let nodes = S.fromList (startNode : endNode : junctions)
+  let edges = findEdges grid nodes
+
+  --   let res = followPathToEdge grid (S.delete (1, 0) nodes) ((1, 0), 0)
+  traverse_ print edges
+  print . length $ edges
+
+-- remember to pass in start and end nodes...
+findEdges :: Grid -> S.Set Coords -> [Edge]
+findEdges g nodes = concatMap (\n -> findEdgesForNode g n (others n)) . S.toList $ nodes
+  where
+    others n = S.delete n nodes
+
+findEdgesForNode :: Grid -> Coords -> S.Set Coords -> [Edge]
+findEdgesForNode g c otherNodes =
+  map (uncurry (Edge c) . (\n -> followPathToEdge g otherNodes (c, n, 0)))
+    . getNeighbours g
+    $ c
+
+followPathToEdge :: Grid -> S.Set Coords -> (Coords, Coords, Int) -> (Coords, Int)
+followPathToEdge g otherNodes (prev, current, i) =
+  if S.member nextNode otherNodes
+    then (nextNode, i' + 1)
+    else followPathToEdge g otherNodes (current, nextNode, i')
+  where
+    nextNode = head . filter (/= prev) . getNeighbours g $ current
+    i' = i + 1
 
 -- could use intersections and diffs I suppose
 getNeighbours :: Grid -> Coords -> [Coords]
