@@ -3,7 +3,6 @@ module Day23Part2 where
 import Data.Foldable (traverse_)
 import Data.Map qualified as M
 import Data.Set qualified as S
-import Utils.Dijkstra (EndNode, StartNode, dijkstra)
 import Utils.Grouping (groupBy', groupMap)
 
 type Coords = (Int, Int)
@@ -16,25 +15,19 @@ type ScoreMap = M.Map (Coords, Coords) Int
 
 data Edge = Edge {from :: Coords, to :: Coords, score :: Int} deriving (Show)
 
+-- dijkstra didn't work even on the simplified graph
+-- as I said before it could well be a flaw in my implementation of dijkstra
+-- I'll just do a "normal" search then
+
+-- 2738 is too low
 part2 = do
   grid <- getGrid <$> getLines "./fixtures/input23Toy.txt"
   let startNode :: Coords = (1, 0)
   let endNode :: Coords = (21, 22) -- real end is (139, 140)
   let (graph, scoreMap) = buildGraph grid startNode endNode
 
-  let res = solve grid startNode endNode
-
-  print res
-
-solve grid startNode endNode = dijkstra scoreFn neighbourGetter isEndNode startNode
-  where
-    scoreFn :: Coords -> Coords -> Int
-    scoreFn from to = (-1) * (scoreMap M.! (from, to))
-    neighbourGetter :: Coords -> [Coords]
-    neighbourGetter c = graph M.! c
-    isEndNode :: Coords -> Bool
-    isEndNode = (== endNode)
-    (graph, scoreMap) = buildGraph grid startNode endNode
+  traverse_ print graph
+  traverse_ print scoreMap
 
 buildGraph :: Grid -> Coords -> Coords -> (Graph, ScoreMap)
 buildGraph grid startNode endNode =
