@@ -1,44 +1,50 @@
 module Day23Part2 where
 
 import Data.Foldable (traverse_)
+import Data.Map qualified as M
 import Data.Set qualified as S
+import Utils.Dijkstra (EndNode, StartNode, dijkstra)
+import Utils.Grouping (groupBy', groupMap)
 
 type Coords = (Int, Int)
 
 type Grid = S.Set Coords
 
+type Graph = M.Map Coords [Coords]
+
+type ScoreMap = M.Map (Coords, Coords) Int
+
 data Edge = Edge {from :: Coords, to :: Coords, score :: Int} deriving (Show)
-
--- curiously dijkstra works well for the to input in part 2 but not the real input
--- probably either not honouring the "no going back" condition or something wrong with my dijkstra
-
--- all right! What if I use dijkstra on the graph of junctions rather than the graph of points...
--- looks like real input only has 7 junctions
--- and the real input has 34
--- surely max distance is findable on such a small graph
--- just have to create it...
--- I guess for each junction i can just follow the paths in the relevant direction until I meet a new junction and count how long the paths are
--- Should end up with each edge appearing twice: will make for a good sense check actually
--- I would also need to include my start and end nodes in the graph of course
--- IDK how efficient/inefficient this process of creating the graph will be
--- but once I have it I guess I could just save it somewhere
--- and in fact a similar approach could be used for part 1, but some edges get filtered out
--- in terms of the "no backtracking" condition I think we're good since once a node is visited in dijkstra it won't appear again
--- indeed even if dijkstra doesn't work a graph of 34 nodes will be simpler to work with than a graph with 9416 nodes
--- and maybe my naive approach used in part 1 will just work...
 
 part2 = do
   grid <- getGrid <$> getLines "./fixtures/input23Toy.txt"
-  let allPoints = S.toList grid
-  let junctions = filter (isJunction grid) allPoints
   let startNode :: Coords = (1, 0)
   let endNode :: Coords = (21, 22) -- real end is (139, 140)
-  let nodes = S.fromList (startNode : endNode : junctions)
-  let edges = findEdges grid nodes
+  let (graph, scoreMap) = buildGraph grid startNode endNode
 
-  --   let res = followPathToEdge grid (S.delete (1, 0) nodes) ((1, 0), 0)
-  traverse_ print edges
-  print . length $ edges
+  let res = solve grid startNode endNode
+
+  print res
+
+solve grid startNode endNode = dijkstra scoreFn neighbourGetter isEndNode startNode
+  where
+    scoreFn :: Coords -> Coords -> Int
+    scoreFn from to = (-1) * (scoreMap M.! (from, to))
+    neighbourGetter :: Coords -> [Coords]
+    neighbourGetter c = graph M.! c
+    isEndNode :: Coords -> Bool
+    isEndNode = (== endNode)
+    (graph, scoreMap) = buildGraph grid startNode endNode
+
+buildGraph :: Grid -> Coords -> Coords -> (Graph, ScoreMap)
+buildGraph grid startNode endNode =
+  let allPoints = S.toList grid
+      junctions = filter (isJunction grid) allPoints
+      nodes = S.fromList (startNode : endNode : junctions)
+      edges = findEdges grid nodes
+      graph = groupMap from to edges
+      scoreMap = M.map (\x -> if length x == 1 then score . head $ x else undefined) . groupBy' (\x -> (from x, to x)) $ edges
+   in (graph, scoreMap)
 
 -- remember to pass in start and end nodes...
 findEdges :: Grid -> S.Set Coords -> [Edge]

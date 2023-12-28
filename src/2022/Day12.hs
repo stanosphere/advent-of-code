@@ -47,7 +47,7 @@ solve startNodeSelector endNodeSelector edgeSelector = do
   let (nodes, startNode, endNodes) = getNodes startNodeSelector endNodeSelector input
   let edges = getEdges edgeSelector nodes
   let neighbourGetter n = M.findWithDefault [] n edges
-  let scoreFn = const 1
+  let scoreFn _ _ = 1
   let isEndNode x = S.member x endNodes
   let res = dijkstra scoreFn neighbourGetter isEndNode startNode
   print res

@@ -32,7 +32,7 @@ type FinalisedDistances nodeId = M.Map nodeId Int
 -- maybe this can be done in Haskell by making it a class rather than a function?
 dijkstra ::
   Ord nodeId =>
-  (nodeId -> Int) -> -- scoreFn
+  (nodeId -> nodeId -> Int) -> -- scoreFn
   (nodeId -> [nodeId]) -> -- neighbourGetter
   (nodeId -> Bool) -> -- end node check
   StartNode nodeId ->
@@ -44,7 +44,7 @@ dijkstra scoreFn neighbourGetter isEndNode startNode = res
 
 dijkstraStep ::
   Ord nodeId =>
-  (nodeId -> Int) ->
+  (nodeId -> nodeId -> Int) ->
   (nodeId -> [nodeId]) ->
   (nodeId -> Bool) ->
   DijkstraState nodeId ->
@@ -53,31 +53,25 @@ dijkstraStep scoreFn neighbourGetter isEndNode (DState visited unVisited _) = DS
   where
     (currentNodeId, currentNodeDist) = getCurrentNode unVisited
     neighbours = filter (`M.notMember` visited) . neighbourGetter $ currentNodeId
-    unVisited' = M.delete currentNodeId . updateNeighbours scoreFn currentNodeDist unVisited $ neighbours
+    neighboursWithScores = map (\n -> (n, currentNodeDist + scoreFn currentNodeId n)) neighbours
+    unVisited' = M.delete currentNodeId . updateNeighbours unVisited $ neighboursWithScores
     visited' = M.insert currentNodeId currentNodeDist visited
     foundEndNode' = if isEndNode currentNodeId then Just (currentNodeId, currentNodeDist) else Nothing
 
 updateNeighbours ::
   Ord nodeId =>
-  (nodeId -> Int) ->
-  Int ->
   TentativeDistances nodeId ->
-  [nodeId] ->
+  [(nodeId, Int)] ->
   TentativeDistances nodeId
-updateNeighbours scoreFn currentNodeDistance = foldl (updateNeighbour scoreFn currentNodeDistance)
+updateNeighbours = foldl updateNeighbour
 
 updateNeighbour ::
   Ord nodeId =>
-  (nodeId -> Int) ->
-  Int ->
   TentativeDistances nodeId ->
-  nodeId ->
+  (nodeId, Int) ->
   TentativeDistances nodeId
-updateNeighbour scoreFn currentNodeDistance distanceMap neighbor = M.alter alterFn neighbor distanceMap
+updateNeighbour distanceMap (neighbor, newScore) = M.alter alterFn neighbor distanceMap
   where
-    newScore :: Int
-    newScore = currentNodeDistance + scoreFn neighbor
-
     alterFn :: Maybe Int -> Maybe Int
     alterFn (Just oldScore) = Just (min oldScore newScore)
     alterFn Nothing = Just newScore

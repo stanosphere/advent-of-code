@@ -72,8 +72,8 @@ part2 = do
 solve :: NodeMap -> GridSize -> Maybe (EndNode Node, Int)
 solve nm gs = dijkstra scoreFn neighbourGetter isEndNode startNode
   where
-    scoreFn :: Node -> Int
-    scoreFn = scoreFn' nm
+    scoreFn :: Node -> Node -> Int
+    scoreFn _ = scoreFn' nm
     neighbourGetter :: Node -> [Node]
     neighbourGetter = getValidNeighbours gs
     isEndNode :: Node -> Bool
