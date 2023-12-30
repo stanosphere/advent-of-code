@@ -26,6 +26,9 @@ import Data.List.Extra (nub, splitOn)
 -- there's also the Stoer Wagner algorithm which might be a little easier to implement if less efficient than Karger's
 -- https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm
 -- I can't see it mentioned in the book
+
+-- dot -Tsvg ./src/2023/graph.dot -o ./src/2023/graph.svg
+-- is an example of how to visualise this stuff
 part1 = do
   inp <- getLines "./fixtures/input25.txt"
   let graph = makeGraph inp
