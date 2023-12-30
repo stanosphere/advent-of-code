@@ -1,6 +1,7 @@
+{-# HLINT ignore "Use <$>" #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
-{-# HLINT ignore "Use <$>" #-}
 module Day24Part2 where
 
 -- I reckon the name of the game is simultaneous equations
@@ -49,14 +50,14 @@ module Day24Part2 where
 -- I suppose tactically I would start by using the duplicate b + 2 and b + 1 terms as well as the duplicate d + 2 terms to simplify stuff a bit
 -- ok so pen and paper this is like really intractable
 -- need something else...
+-- so someone spotted a nice manipulation that you can do so I'm just gonna borrow that!
+-- https://www.reddit.com/r/adventofcode/comments/18q40he/2023_day_24_part_2_a_straightforward_nonsolver/
+-- I absolutely love this sort o thing!
 
-import Data.Foldable
-import Data.List (nub, sortOn, tails)
-import Data.Map qualified as M
-import Data.Maybe (mapMaybe)
 import Data.Ratio (Ratio, denominator, numerator, (%))
 import Text.Parsec qualified as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
+import Utils.Linear (solve)
 
 data HailStone = HS
   { x0 :: Integer,
@@ -74,24 +75,42 @@ toDouble x = fromIntegral n / fromIntegral d
     n = numerator x
     d = denominator x
 
-part2 :: IO ()
+part2 :: IO Rational
 part2 = do
   inp <- getLines "./fixtures/input24.txt"
   let hss = map (unsafeParse hailstoneParser) inp
 
-  traverse_ print . sortOn snd . M.toList . M.filter (> 1) . frequencies . map (vx) $ hss
-  print ""
-  traverse_ print . sortOn snd . M.toList . M.filter (> 1) . frequencies . map (vy) $ hss
-  print ""
-  traverse_ print . sortOn snd . M.toList . M.filter (> 1) . frequencies . map (vz) $ hss
-  print ""
+  let i = head hss
+  let js = take 4 . tail $ hss
+  let xyEquations = toRat . map (makeEquationXY i) $ js
+  let xzEquations = toRat . map (makeEquationXZ i) $ js
 
-frequencies :: Ord a => [a] -> M.Map a Int
-frequencies = foldr (alter' (maybe 1 (+ 1))) M.empty
+  let [x, y, _, _] = solve xyEquations
+  let [_, z, _, _] = solve xzEquations
+  let res = x + y + z
 
--- like alter but can't delete elements
-alter' :: Ord k => (Maybe a -> a) -> k -> M.Map k a -> M.Map k a
-alter' f = M.alter (Just . f)
+  return res
+
+toRat :: [[Integer]] -> [[Rational]]
+toRat = map (map (% 1))
+
+makeEquationXY :: HailStone -> HailStone -> [Integer]
+makeEquationXY i j =
+  [ vy i - vy j,
+    vx j - vx i,
+    y0 j - y0 i,
+    x0 i - x0 j,
+    (x0 i * vy i) - (y0 i * vx i) - (x0 j * vy j) + (y0 j * vx j)
+  ]
+
+makeEquationXZ :: HailStone -> HailStone -> [Integer]
+makeEquationXZ i j =
+  [ vz i - vz j,
+    vx j - vx i,
+    z0 j - z0 i,
+    x0 i - x0 j,
+    (x0 i * vz i) - (z0 i * vx i) - (x0 j * vz j) + (z0 j * vx j)
+  ]
 
 -- parsing stuff
 getLines :: FilePath -> IO [String]

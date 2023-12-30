@@ -25,6 +25,7 @@ library
   exposed-modules:
       Utils.Dijkstra
       Utils.Grouping
+      Utils.Linear
       Utils.Memo
   other-modules:
       Paths_advent_of_code
