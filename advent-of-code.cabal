@@ -9,9 +9,9 @@ version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/stanosphere/advent-of-code#readme>
 homepage:       https://github.com/stanosphere/advent-of-code#readme
 bug-reports:    https://github.com/stanosphere/advent-of-code/issues
-author:         Author name here
+author:         Paul Stanford
 maintainer:     example@example.com
-copyright:      2023 Author name here
+copyright:      2023 Paul Stanford
 license:        BSD3
 build-type:     Simple
 extra-source-files:
