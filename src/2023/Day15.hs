@@ -2,8 +2,8 @@ module Day15 where
 
 import Data.Char (ord)
 import Data.List.Split (splitOn)
-import Data.Map qualified as M (Map, adjust, alter, empty, toList)
-import Text.Parsec qualified as P
+import qualified Data.Map as M (Map, adjust, alter, empty, toList)
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 -- using list because ordering matters
@@ -41,7 +41,7 @@ process boxes (Ins boxLabel lensLabel (Put focalLength)) = alter' (putFnIfJust (
         then map (\(s', i') -> if s' == s then (s, i) else (s', i')) xs
         else (s, i) : xs
     putFnIfJust (s, i) Nothing = [(s, i)]
-    alter' :: Ord k => (Maybe a -> a) -> k -> M.Map k a -> M.Map k a
+    alter' :: (Ord k) => (Maybe a -> a) -> k -> M.Map k a -> M.Map k a
     alter' f = M.alter (Just . f)
 
 -- 506869

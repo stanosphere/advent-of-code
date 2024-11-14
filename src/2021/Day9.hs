@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module Day9 where
 
 import Data.Char (digitToInt)
@@ -63,7 +65,7 @@ getAdjacentSquares' :: Grid -> Coords -> [(Coords, Height)]
 getAdjacentSquares' grid (x, y) =
   mapMaybe (`lookup'` grid) [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
 
-lookup' :: Ord k => k -> M.Map k v -> Maybe (k, v)
+lookup' :: (Ord k) => k -> M.Map k v -> Maybe (k, v)
 lookup' k m = fmap (\v -> (k, v)) (M.lookup k m)
 
 isMinimum :: Grid -> (Coords, Height) -> Bool
