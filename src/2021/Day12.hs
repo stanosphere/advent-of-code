@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
-module Day12 (iterateUntil, stringToEdge, toyExample, largeToyExample, realInput, Path, Edge (from, to), Cave, appendPath) where
+module Day12 (part1, iterateUntil, stringToEdge, toyExample, largeToyExample, realInput, Path, Edge (from, to), Cave, appendPath) where
 
 import Data.Char (isLower)
 import Data.List (nub, partition)

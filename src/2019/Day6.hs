@@ -2,8 +2,8 @@ module Day6 where
 
 import Data.List (nub, tails)
 import Data.List.Extra (splitOn)
-import Data.Map qualified as M (Map, findWithDefault)
-import Data.Set qualified as S (difference, fromList, size, toList)
+import qualified Data.Map as M (Map, findWithDefault)
+import qualified Data.Set as S (difference, fromList, size, toList)
 import Data.Tree (Tree (Node), foldTree)
 import Utils.Grouping (groupMap)
 
@@ -47,16 +47,16 @@ paths = appendPaths []
     appendPaths p (Node label []) = [label : p]
     appendPaths p (Node label children) = concatMap (appendPaths (label : p)) children
 
-buildTree :: Ord a => [Edge a] -> Tree a
+buildTree :: (Ord a) => [Edge a] -> Tree a
 buildTree es =
   let myMap = groupMap from to es
    in buildTree' myMap (identifyRoot es)
 
 -- could potentially delete the root entry from the map as we move down the tree...
-buildTree' :: Ord a => M.Map a [a] -> a -> Tree a
+buildTree' :: (Ord a) => M.Map a [a] -> a -> Tree a
 buildTree' myMap root = Node root (map (buildTree' myMap) . M.findWithDefault [] root $ myMap)
 
-identifyRoot :: Ord a => [Edge a] -> a
+identifyRoot :: (Ord a) => [Edge a] -> a
 identifyRoot es =
   let froms = S.fromList . map from $ es
       tos = S.fromList . map to $ es
@@ -108,4 +108,6 @@ getAllpaths :: Tree a -> [[a]]
 getAllpaths t = foldTree folder t []
   where
     folder :: a -> [[a] -> [[a]]] -> [a] -> [[a]]
-    folder a fs p = let p' = p ++ [a] in if null fs then [p'] else concatMap ($ p') fs
+    folder a fs p =
+      let p' = p ++ [a]
+       in if null fs then [p'] else concatMap ($ p') fs

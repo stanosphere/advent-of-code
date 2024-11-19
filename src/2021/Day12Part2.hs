@@ -1,11 +1,9 @@
 module Day12Part2 where
 
 import Data.Char (isLower)
-import Data.Foldable
-import Data.List (group, iterate', nub, partition, sort)
-import Data.List.Split (splitOn)
-import Data.Maybe (mapMaybe)
-import Day12 (Cave, Edge (from, to), Path, appendPath, iterateUntil, largeToyExample, realInput, stringToEdge, toyExample)
+import Data.Foldable ()
+import Data.List (group, partition, sort)
+import Day12 (Cave, Edge (to), Path, appendPath, iterateUntil, realInput, stringToEdge)
 
 data PathState = PathState {terminal :: [Path], nonTerminal :: [Path]} deriving (Show)
 
