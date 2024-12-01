@@ -28,10 +28,8 @@ frequencies = foldr incrementMap M.empty
     incrementMap x = M.insertWith (+) x 1
 
 getInput :: FilePath -> IO ([Int], [Int])
-getInput filePath = toTuple . map (map readInt) . transpose . map words . lines <$> readFile filePath
+getInput filePath = toTuple . map (map read) . transpose . map words . lines <$> readFile filePath
   where
-    readInt :: String -> Int
-    readInt = read
     toTuple :: [a] -> (a, a)
     toTuple [x, y] = (x, y)
     toTuple _ = undefined
