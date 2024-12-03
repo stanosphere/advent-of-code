@@ -5,13 +5,13 @@ import Data.Maybe (catMaybes)
 import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse, try)
 
-data Mult = Mult Int Int
+type Mult = (Int, Int)
 
-solve :: IO Int
-solve = processInput <$> getInput
+part1 :: IO Int
+part1 = processInput <$> getInput
 
 processInput :: String -> Int
-processInput = sum . map (\(Mult x y) -> x * y) . catMaybes . unsafeParse inputParser
+processInput = sum . map (uncurry (*)) . catMaybes . unsafeParse inputParser
 
 inputParser :: Parser [Maybe Mult]
 inputParser = P.many (Just <$> try multParser P.<|> (P.anyToken $> Nothing))
@@ -23,10 +23,10 @@ multParser = do
   _ <- P.char ','
   y <- P.many1 P.digit
   _ <- P.char ')'
-  return (Mult (read x) (read y))
+  return (read x, read y)
 
 unsafeParse :: Parser a -> String -> a
-unsafeParse p s = case parse p "still don't really know wht this arg is for lol" s of
+unsafeParse p s = case parse p "this arg is the source name, I guess it's just for error messages or something?" s of
   Left res -> error . show $ res
   Right res -> res
 

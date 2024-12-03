@@ -5,20 +5,23 @@ import Data.Maybe (catMaybes)
 import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (try)
 
-data Mult = Mult Int Int
+type Mult = (Int, Int)
 
 data ShouldParse = Do | Don't
 
 -- my first ever stateful parser!
-type Parser a = P.Parsec String ShouldParse a
+-- state is just whether or not we should parse the mults
+type StatefulParser a = P.Parsec String ShouldParse a
 
-solve :: IO Int
-solve = processInput <$> getInput
+part2 :: IO Int
+part2 = processInput <$> getInput
+
+-- for part1 I think could use the same code and just not parse the "do"s and "don't"s
 
 processInput :: String -> Int
-processInput = sum . map (\(Mult x y) -> x * y) . catMaybes . unsafeParse inputParser
+processInput = sum . map (uncurry (*)) . catMaybes . unsafeParse Do inputParser
 
-inputParser :: Parser [Maybe Mult]
+inputParser :: StatefulParser [Maybe Mult]
 inputParser =
   P.many
     ( try multParser
@@ -27,7 +30,7 @@ inputParser =
         P.<|> (P.anyToken $> Nothing)
     )
 
-multParser :: Parser (Maybe Mult)
+multParser :: StatefulParser (Maybe Mult)
 multParser = do
   mult <- multParser'
   shouldParse <- P.getState
@@ -38,25 +41,25 @@ multParser = do
     )
   where
     -- same as the one from part 1
-    multParser' :: Parser Mult
+    multParser' :: StatefulParser Mult
     multParser' = do
       _ <- P.string "mul("
       x <- P.many1 P.digit
       _ <- P.char ','
       y <- P.many1 P.digit
       _ <- P.char ')'
-      return (Mult (read x) (read y))
+      return (read x, read y)
 
 -- always returns Nothing which makes me feel like there's a better way to model this
-doParser :: Parser (Maybe Mult)
+doParser :: StatefulParser (Maybe Mult)
 doParser = P.string "do()" *> P.putState Do $> Nothing
 
 -- always returns Nothing which makes me feel like there's a better way to model this
-dontParser :: Parser (Maybe Mult)
+dontParser :: StatefulParser (Maybe Mult)
 dontParser = P.string "don't()" *> P.putState Don't $> Nothing
 
-unsafeParse :: Parser a -> String -> a
-unsafeParse p s = case P.runParser p Do "" s of
+unsafeParse :: ShouldParse -> StatefulParser a -> String -> a
+unsafeParse initState p s = case P.runParser p initState "" s of
   Left res -> error . show $ res
   Right res -> res
 
