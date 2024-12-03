@@ -8,10 +8,10 @@ import Text.ParserCombinators.Parsec (Parser, parse, try)
 data Mult = Mult Int Int
 
 part1 :: IO Int
-part1 = sum . map processLine <$> getInput
+part1 = processInput <$> getInput
 
-processLine :: String -> Int
-processLine = sum . map (\(Mult x y) -> x * y) . catMaybes . unsafeParse inputParser
+processInput :: String -> Int
+processInput = sum . map (\(Mult x y) -> x * y) . catMaybes . unsafeParse inputParser
 
 inputParser :: Parser [Maybe Mult]
 inputParser = P.many (Just <$> try multParser P.<|> (P.anyToken $> Nothing))
@@ -33,5 +33,5 @@ unsafeParse p s = case parse p "still don't really know wht this arg is for lol"
 exampleString :: String
 exampleString = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"
 
-getInput :: IO [String]
-getInput = lines <$> readFile "./fixtures/input4.txt"
+getInput :: IO String
+getInput = readFile "./fixtures/input4.txt"
