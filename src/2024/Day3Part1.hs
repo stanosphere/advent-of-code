@@ -1,4 +1,4 @@
-module Day3 where
+module Day3Part1 where
 
 import Data.Functor (($>))
 import Data.Maybe (catMaybes)
@@ -7,8 +7,8 @@ import Text.ParserCombinators.Parsec (Parser, parse, try)
 
 data Mult = Mult Int Int
 
-part1 :: IO Int
-part1 = processInput <$> getInput
+solve :: IO Int
+solve = processInput <$> getInput
 
 processInput :: String -> Int
 processInput = sum . map (\(Mult x y) -> x * y) . catMaybes . unsafeParse inputParser
@@ -30,8 +30,5 @@ unsafeParse p s = case parse p "still don't really know wht this arg is for lol"
   Left res -> error . show $ res
   Right res -> res
 
-exampleString :: String
-exampleString = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"
-
 getInput :: IO String
-getInput = readFile "./fixtures/input4.txt"
+getInput = readFile "./fixtures/input3.txt"
