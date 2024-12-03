@@ -8,7 +8,7 @@ module Day4 where
 import Data.List (sortOn)
 import Data.List.Extra (maximumOn)
 import Data.List.Split (chunksOf)
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
     empty,
     filter,
@@ -18,7 +18,7 @@ import Data.Map qualified as M
     toList,
     unionWith,
   )
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 import Utils.Grouping (groupMapReduce)
 
