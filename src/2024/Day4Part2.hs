@@ -55,19 +55,6 @@ isXmas grid (x, y) = thisCombo `elem` validCombos
 findAPositions :: Grid -> [Coord]
 findAPositions = M.keys . M.filter (== 'A')
 
--- I could probably have done this as a list comp couldn't I...
-stepFunctions :: [Coord -> Coord]
-stepFunctions =
-  [ \(x, y) -> (x - 1, y - 1),
-    \(x, y) -> (x - 1, y),
-    \(x, y) -> (x - 1, y + 1),
-    \(x, y) -> (x, y - 1),
-    \(x, y) -> (x, y + 1),
-    \(x, y) -> (x + 1, y - 1),
-    \(x, y) -> (x + 1, y),
-    \(x, y) -> (x + 1, y + 1)
-  ]
-
 toGrid :: [String] -> Grid
 toGrid grid =
   M.fromList
