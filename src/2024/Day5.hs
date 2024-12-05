@@ -1,7 +1,7 @@
 module Day5 where
 
 import Data.Function (on)
-import Data.List (groupBy, sortOn)
+import Data.List (groupBy, sortBy, sortOn)
 import Data.List.Split (splitOn)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
@@ -20,11 +20,21 @@ plan for part 1
   - I really hope there's a simpler wya of doing this...
 -}
 
+{-
+plan for part 2
+
+ok so I feel like ideally I'd make an an Ord instance but IDK how to do that like dynamically
+so instead I think what I can do is make a function that assigns an Ordering based on a relevant subset of rules and then just use `sortBy`
+supposing that this works it seems to me that I might be able to implement part1 in terms of part2
+that is assuming that there is a unique correct ordering for each list in the input
+which may not be the case, I think given the question  all that's required is all correct orderings have the same middle element which is a much weaker constraint than uniqueness
+anyway I should probably like write some code now shouldn't I!
+ -}
+
 data Rule = Rule {_before :: Int, _after :: Int} deriving (Show)
 
 type RuleMap = M.Map Int (S.Set Int)
 
--- TODO naming is confusing ATM so I should use this!
 data RuleMapping = RM {_beforeToAfter :: RuleMap, _afterToBefore :: RuleMap}
 
 part1 :: IO Int
@@ -32,6 +42,12 @@ part1 = do
   (rules, lists) <- getInput
   let ruleMapping = toRuleMapping rules
   return . sum . map getMiddleElem . filter (isValid ruleMapping) $ lists
+
+part2 :: IO Int
+part2 = do
+  (rules, lists) <- getInput
+  let ruleMapping = toRuleMapping rules
+  return . sum . map (getMiddleElem . sortList ruleMapping) . filter (not . isValid ruleMapping) $ lists
 
 getMiddleElem :: [a] -> a
 getMiddleElem xs = xs !! (length xs `div` 2)
@@ -57,6 +73,24 @@ getElemsBefore n = S.fromList . take (n - 1)
 getElemsAfter :: (Ord a) => Int -> [a] -> S.Set a
 getElemsAfter n = S.fromList . drop (n + 1)
 
+reduceRuleMapping :: S.Set Int -> RuleMapping -> RuleMapping
+reduceRuleMapping xs rm = RM (reduceRuleMap . _beforeToAfter $ rm) (reduceRuleMap . _afterToBefore $ rm)
+  where
+    reduceRuleMap :: RuleMap -> RuleMap
+    reduceRuleMap = M.map (S.intersection xs) . M.filterWithKey (\k _ -> S.member k xs)
+
+-- hmmmmm looks like I only need half the mapping...
+-- same is probably true in part one then!!!
+createOrdering :: RuleMapping -> Int -> Int -> Ordering
+createOrdering (RM beforeToAfter afterToBefore) x y
+  | x == y = EQ
+  | S.member y . getElems x $ beforeToAfter = GT
+  | S.member y . getElems x $ beforeToAfter = LT
+  | otherwise = EQ
+
+sortList :: RuleMapping -> [Int] -> [Int]
+sortList rm xs = sortBy (createOrdering . reduceRuleMapping (S.fromList xs) $ rm) xs
+
 toRuleMapping :: [Rule] -> RuleMapping
 toRuleMapping rules = RM (beforeToAfter rules) (afterToBefore rules)
   where
@@ -69,6 +103,7 @@ getInput = parseInput . lines <$> readFile "./fixtures/input5.txt"
 parseInput :: [String] -> ([Rule], [[Int]])
 parseInput xs = (map parseRule . take 1176 $ xs, map parseList . drop 1177 $ xs)
 
+-- for the toy input, yes I hate hard coding the line numbers!
 -- parseInput :: [String] -> ([Rule], [[Int]])
 -- parseInput xs = (map parseRule . take 21 $ xs, map parseList . drop 22 $ xs)
 
