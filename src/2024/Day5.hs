@@ -6,7 +6,6 @@ import Data.List.Split (splitOn)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
-import Debug.Trace (trace)
 
 {-
 plan for part 1
@@ -28,29 +27,29 @@ type RuleMap = M.Map Int (S.Set Int)
 -- TODO naming is confusing ATM so I should use this!
 data RuleMapping = RM {_beforeToAfter :: RuleMap, _afterToBefore :: RuleMap}
 
+part1 :: IO Int
+part1 = do
+  (rules, lists) <- getInput
+  let ruleMapping = toRuleMapping rules
+  return . sum . map getMiddleElem . filter (isValid ruleMapping) $ lists
+
 getMiddleElem :: [a] -> a
 getMiddleElem xs = xs !! (length xs `div` 2)
 
-part1 = do
-  (rules, lists) <- getInput
-  let ruleMap = toRuleMapBeforeToAfter rules
-  let ruleMap' = toRuleMapAfterToBefore rules
-  let res = sum . map getMiddleElem . filter (isValid ruleMap ruleMap') $ lists
-  print res
-
-isValid :: RuleMap -> RuleMap -> [Int] -> Bool
-isValid rm rm' xs = and . zipWith isElemValid [0 ..] $ xs
+isValid :: RuleMapping -> [Int] -> Bool
+isValid rm xs = and . zipWith isElemValid [0 ..] $ xs
   where
     isElemValid index element =
       let elemsBefore = getElemsBefore index xs
-          elemsThatShouldBeAfter = getElemsThatShouldBeAfter element rm
+          elemsThatShouldBeAfter = getElems element (_beforeToAfter rm)
 
           elemsAfter = getElemsAfter index xs
-          elemsThatShouldBeBefore = getElemsThatShouldBeAfter element rm'
-       in (S.empty == S.intersection elemsBefore elemsThatShouldBeAfter) && (S.empty == S.intersection elemsAfter elemsThatShouldBeBefore)
+          elemsThatShouldBeBefore = getElems element (_afterToBefore rm)
+       in (S.empty == S.intersection elemsBefore elemsThatShouldBeAfter)
+            && (S.empty == S.intersection elemsAfter elemsThatShouldBeBefore)
 
-getElemsThatShouldBeAfter :: Int -> RuleMap -> S.Set Int
-getElemsThatShouldBeAfter x = fromMaybe S.empty . M.lookup x
+getElems :: Int -> RuleMap -> S.Set Int
+getElems x = fromMaybe S.empty . M.lookup x
 
 getElemsBefore :: (Ord a) => Int -> [a] -> S.Set a
 getElemsBefore n = S.fromList . take (n - 1)
@@ -58,11 +57,11 @@ getElemsBefore n = S.fromList . take (n - 1)
 getElemsAfter :: (Ord a) => Int -> [a] -> S.Set a
 getElemsAfter n = S.fromList . drop (n + 1)
 
-toRuleMapBeforeToAfter :: [Rule] -> RuleMap
-toRuleMapBeforeToAfter = M.map (S.fromList . map _after) . groupBy' _before
-
-toRuleMapAfterToBefore :: [Rule] -> RuleMap
-toRuleMapAfterToBefore = M.map (S.fromList . map _before) . groupBy' _after
+toRuleMapping :: [Rule] -> RuleMapping
+toRuleMapping rules = RM (beforeToAfter rules) (afterToBefore rules)
+  where
+    beforeToAfter = M.map (S.fromList . map _after) . groupBy' _before
+    afterToBefore = M.map (S.fromList . map _before) . groupBy' _after
 
 getInput :: IO ([Rule], [[Int]])
 getInput = parseInput . lines <$> readFile "./fixtures/input5.txt"
