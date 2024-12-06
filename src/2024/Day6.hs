@@ -1,6 +1,7 @@
 module Day6 where
 
 import Data.List (find)
+import Data.List.Extra (nubOrdOn)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, isJust)
 import qualified Data.Set as S
@@ -78,14 +79,21 @@ part2 = do
   input <- getInput
   let (grid, startPosition) = toGridWithStartPosition input
   let initGuardState = GS U startPosition
-  let initGuardState' = GS' S.empty initGuardState False
+
   return
     . length
-    . filter (`isLoop` initGuardState')
-    . map (addObstacleToGrid (grid, startPosition))
-    . getAllValidObstaclePositions
+    . filter (\(x, y, _) -> isLoop y x)
+    . nubOrdOn (\(_, _, z) -> z) -- need this deduplication since we only want to consider placing each possible obstacle once (the first time it appears)
+    . map (getNewGridAndStartingPosition (grid, startPosition))
     . walkGuard grid
     $ initGuardState
+
+-- I've done this so that we're not starting from scratch every time!
+-- can just use where we got up to in the initial part 1 traversal
+getNewGridAndStartingPosition :: (Grid, Coord) -> GuardState -> (GuardState', Grid, Coord)
+getNewGridAndStartingPosition (g, startingPos) gs = (GS' S.empty gs False, addObstacleToGrid (g, startingPos) obstPos, obstPos)
+  where
+    obstPos = _position . advance $ gs
 
 walkGuard :: Grid -> GuardState -> [GuardState]
 walkGuard grid = catMaybes . takeWhile isJust . iterate (wrap (step grid)) . Just
