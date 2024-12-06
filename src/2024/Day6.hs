@@ -6,17 +6,17 @@ import qualified Data.Set as S
 
 type Coord = (Int, Int)
 
-data Square = Obstacle | Free deriving (Show)
+data Square = Obstacle | Free deriving (Show, Eq, Ord)
 
 type Grid = M.Map Coord Square
 
-data Direction = U | D | L | R deriving (Show)
+data Direction = U | D | L | R deriving (Show, Eq, Ord)
 
 data GuardState = GS
   { _direction :: Direction,
     _position :: Coord
   }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 {-
 plan for part 1
@@ -30,11 +30,33 @@ plan for part 1
 
  -}
 
+{-
+plan for part 2
+
+I'm thinking maybe if I consider putting obstacles in the way for every single position
+that would be in the way for the original guard's path that would tell me the answer.
+
+The guard visited 5199 squares in part 1
+This was from 6026 unique guard states
+part 1 takes like 0.05 secs
+so if I had to run that 6000 times we'd be looking at 5 minutes :(
+that's assuming that the time for part 1 is average as well...
+plus there'd need to be some cycle detection stuff which would make it take even longer
+
+so I'm thinking there must be a cleverer way to work out where to put obstacles...
+
+nonetheless it might be worth showing that this approach really would work on the toy example
+might guide me to thinking of a better way...
+
+ -}
+
+part1 :: IO Int
 part1 = do
   input <- getInput
   let (grid, startPosition) = toGridWithStartPosition input
   let initGuardState = GS U startPosition
   let res = S.size . S.fromList . map _position . walkGuard grid $ initGuardState
+  print (M.size grid)
   return res
 
 walkGuard :: Grid -> GuardState -> [GuardState]
