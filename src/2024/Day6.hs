@@ -100,16 +100,15 @@ getAllValidObstaclePositions :: [GuardState] -> [Coord]
 getAllValidObstaclePositions = S.toList . S.fromList . map (_position . advance)
 
 isLoop :: Grid -> GuardState' -> Bool
-isLoop grid = isJust . find isLoop' . walkGuardPart2 grid
+isLoop grid = isJust . find _isLoop . walkGuardPart2 grid
   where
-    -- TODO modify this to check less frequently!
-    isLoop' :: GuardState' -> Bool
-    isLoop' (GS' _ _ isLoop) = isLoop
     -- the result of `walkGuardPart2` will either be an infinite list or will stop when the guard goes out of bounds
     -- just need a stopping condition to know we've got a cycle!
     walkGuardPart2 :: Grid -> GuardState' -> [GuardState']
     walkGuardPart2 grid' = catMaybes . takeWhile isJust . iterate (wrap (stepForPart2 grid')) . Just
 
+-- only check for loops when we hit an obstacle and only update the set of visited states when we hit an obstacle
+-- this made part 2 about 8x faster overall but it's still slow
 stepForPart2 :: Grid -> GuardState' -> Maybe GuardState'
 stepForPart2 grid (GS' prev curr _) = case nextSquare grid curr of
   Nothing -> Nothing
