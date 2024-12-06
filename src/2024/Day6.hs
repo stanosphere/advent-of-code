@@ -22,7 +22,8 @@ data GuardState = GS
 -- I mean I probs could just use a list but whatevs
 data GuardState' = GS'
   { _previousStates :: S.Set GuardState,
-    _current :: GuardState
+    _current :: GuardState,
+    _shouldCheckForLoop :: Bool
   }
   deriving (Show, Eq, Ord)
 
@@ -58,6 +59,8 @@ might guide me to thinking of a better way...
 
  -}
 
+{- hmm i can make my state smaller I think...-}
+
 part1 :: IO Int
 part1 = do
   input <- getInput
@@ -75,7 +78,7 @@ part2 = do
   input <- getInput
   let (grid, startPosition) = toGridWithStartPosition input
   let initGuardState = GS U startPosition
-  let initGuardState' = GS' S.empty initGuardState
+  let initGuardState' = GS' S.empty initGuardState False
   return
     . length
     . filter (`isLoop` initGuardState')
@@ -99,15 +102,19 @@ getAllValidObstaclePositions = S.toList . S.fromList . map (_position . advance)
 isLoop :: Grid -> GuardState' -> Bool
 isLoop grid = isJust . find isLoop' . walkGuardPart2 grid
   where
+    -- TODO modify this to check less frequently!
     isLoop' :: GuardState' -> Bool
-    isLoop' (GS' prev curr) = S.member curr prev
+    isLoop' (GS' prev curr _) = S.member curr prev
     -- the result of `walkGuardPart2` will either be an infinite list or will stop when the guard goes out of bounds
     -- just need a stopping condition to know we've got a cycle!
     walkGuardPart2 :: Grid -> GuardState' -> [GuardState']
     walkGuardPart2 grid' = catMaybes . takeWhile isJust . iterate (wrap (stepForPart2 grid')) . Just
 
 stepForPart2 :: Grid -> GuardState' -> Maybe GuardState'
-stepForPart2 grid (GS' prev curr) = fmap (GS' (S.insert curr prev)) . step grid $ curr
+stepForPart2 grid (GS' prev curr _) = case nextSquare grid curr of
+  Nothing -> Nothing
+  Just Obstacle -> Just (GS' (S.insert curr prev) (turnRight curr) True)
+  Just Free -> Just (GS' prev (advance curr) False)
 
 step :: Grid -> GuardState -> Maybe GuardState
 step grid gs = fmap (\s -> step' s gs) . nextSquare grid $ gs
