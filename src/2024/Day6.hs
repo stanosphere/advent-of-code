@@ -28,6 +28,12 @@ data GuardState' = GS'
   }
   deriving (Show, Eq, Ord)
 
+data GuardStartInfo = GSI
+  { _guardState :: GuardState',
+    _grid :: Grid,
+    _obstaclePosition :: Coord
+  }
+
 {-
 plan for part 1
 
@@ -60,8 +66,6 @@ might guide me to thinking of a better way...
 
  -}
 
-{- hmm i can make my state smaller I think...-}
-
 part1 :: IO Int
 part1 = do
   input <- getInput
@@ -82,28 +86,24 @@ part2 = do
 
   return
     . length
-    . filter (\(x, y, _) -> isLoop y x)
-    . nubOrdOn (\(_, _, z) -> z) -- need this deduplication since we only want to consider placing each possible obstacle once (the first time it appears)
+    . filter (\(GSI guardState grid' _) -> isLoop grid' guardState)
+    . nubOrdOn _obstaclePosition -- need this deduplication since we only want to consider placing each possible obstacle once (the first time it appears)
     . map (getNewGridAndStartingPosition (grid, startPosition))
     . walkGuard grid
     $ initGuardState
 
 -- I've done this so that we're not starting from scratch every time!
 -- can just use where we got up to in the initial part 1 traversal
-getNewGridAndStartingPosition :: (Grid, Coord) -> GuardState -> (GuardState', Grid, Coord)
-getNewGridAndStartingPosition (g, startingPos) gs = (GS' S.empty gs False, addObstacleToGrid (g, startingPos) obstPos, obstPos)
+getNewGridAndStartingPosition :: (Grid, Coord) -> GuardState -> GuardStartInfo
+getNewGridAndStartingPosition (g, startingPos) gs = GSI guardState grid obstaclePosition
   where
-    obstPos = _position . advance $ gs
+    obstaclePosition = _position . advance $ gs
+    guardState = GS' S.empty gs False
+    grid = if startingPos == obstaclePosition then g else M.insert obstaclePosition Obstacle g
 
 walkGuard :: Grid -> GuardState -> [GuardState]
 walkGuard grid = catMaybes . takeWhile isJust . iterate (wrap (step grid)) . Just
 
-addObstacleToGrid :: (Grid, Coord) -> Coord -> Grid
-addObstacleToGrid (g, startingPos) c = if startingPos == c then g else M.insert c Obstacle g
-
--- hmmmmmm actually we can't add an obstacle if it would get in the way of the old path now can we!!
--- welllllll actually we can but there wouldn't be any point since such an obstacle would have been added before anyway
--- so let's just dedupe a list of possible obstacle I guess
 getAllValidObstaclePositions :: [GuardState] -> [Coord]
 getAllValidObstaclePositions = S.toList . S.fromList . map (_position . advance)
 
