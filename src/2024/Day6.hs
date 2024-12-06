@@ -1,5 +1,6 @@
 module Day6 where
 
+import Data.List (find)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, isJust)
 import qualified Data.Set as S
@@ -15,6 +16,13 @@ data Direction = U | D | L | R deriving (Show, Eq, Ord)
 data GuardState = GS
   { _direction :: Direction,
     _position :: Coord
+  }
+  deriving (Show, Eq, Ord)
+
+-- I mean I probs could just use a list but whatevs
+data GuardState' = GS'
+  { _previousStates :: S.Set GuardState,
+    _current :: GuardState
   }
   deriving (Show, Eq, Ord)
 
@@ -55,19 +63,51 @@ part1 = do
   input <- getInput
   let (grid, startPosition) = toGridWithStartPosition input
   let initGuardState = GS U startPosition
-  let res = S.size . S.fromList . map _position . walkGuard grid $ initGuardState
-  print (M.size grid)
-  return res
+  return
+    . S.size
+    . S.fromList
+    . map _position
+    . walkGuard grid
+    $ initGuardState
+
+part2 :: IO Int
+part2 = do
+  input <- getInput
+  let (grid, startPosition) = toGridWithStartPosition input
+  let initGuardState = GS U startPosition
+  let initGuardState' = GS' S.empty initGuardState
+  return
+    . length
+    . filter (`isLoop` initGuardState')
+    . map (addObstacleToGrid (grid, startPosition))
+    . getAllValidObstaclePositions
+    . walkGuard grid
+    $ initGuardState
 
 walkGuard :: Grid -> GuardState -> [GuardState]
 walkGuard grid = catMaybes . takeWhile isJust . iterate (wrap (step grid)) . Just
 
--- surely something like this is in the standard lib...
-wrap :: (a -> Maybe a) -> (Maybe a -> Maybe a)
-wrap f = g
+addObstacleToGrid :: (Grid, Coord) -> Coord -> Grid
+addObstacleToGrid (g, startingPos) c = if startingPos == c then g else M.insert c Obstacle g
+
+-- hmmmmmm actually we can't add an obstacle if it would get in the way of the old path now can we!!
+-- welllllll actually we can but there wouldn't be any point since such an obstacle would have been added before anyway
+-- so let's just dedupe a list of possible obstacle I guess
+getAllValidObstaclePositions :: [GuardState] -> [Coord]
+getAllValidObstaclePositions = S.toList . S.fromList . map (_position . advance)
+
+isLoop :: Grid -> GuardState' -> Bool
+isLoop grid = isJust . find isLoop' . walkGuardPart2 grid
   where
-    g Nothing = Nothing
-    g (Just x) = f x
+    isLoop' :: GuardState' -> Bool
+    isLoop' (GS' prev curr) = S.member curr prev
+    -- the result of `walkGuardPart2` will either be an infinite list or will stop when the guard goes out of bounds
+    -- just need a stopping condition to know we've got a cycle!
+    walkGuardPart2 :: Grid -> GuardState' -> [GuardState']
+    walkGuardPart2 grid' = catMaybes . takeWhile isJust . iterate (wrap (stepForPart2 grid')) . Just
+
+stepForPart2 :: Grid -> GuardState' -> Maybe GuardState'
+stepForPart2 grid (GS' prev curr) = fmap (GS' (S.insert curr prev)) . step grid $ curr
 
 step :: Grid -> GuardState -> Maybe GuardState
 step grid gs = fmap (\s -> step' s gs) . nextSquare grid $ gs
@@ -111,6 +151,13 @@ toGridWithStartPosition grid = (M.map toSquare . M.fromList $ rawGrid, startPosi
     toSquare :: Char -> Square
     toSquare '#' = Obstacle
     toSquare _ = Free
+
+-- surely something like this is in the standard lib...
+wrap :: (a -> Maybe a) -> (Maybe a -> Maybe a)
+wrap f = g
+  where
+    g Nothing = Nothing
+    g (Just x) = f x
 
 getInput :: IO [String]
 getInput = lines <$> readFile "./fixtures/input6.txt"
