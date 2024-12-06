@@ -23,7 +23,7 @@ data GuardState = GS
 data GuardState' = GS'
   { _previousStates :: S.Set GuardState,
     _current :: GuardState,
-    _shouldCheckForLoop :: Bool
+    _isLoop :: Bool
   }
   deriving (Show, Eq, Ord)
 
@@ -104,7 +104,7 @@ isLoop grid = isJust . find isLoop' . walkGuardPart2 grid
   where
     -- TODO modify this to check less frequently!
     isLoop' :: GuardState' -> Bool
-    isLoop' (GS' prev curr _) = S.member curr prev
+    isLoop' (GS' _ _ isLoop) = isLoop
     -- the result of `walkGuardPart2` will either be an infinite list or will stop when the guard goes out of bounds
     -- just need a stopping condition to know we've got a cycle!
     walkGuardPart2 :: Grid -> GuardState' -> [GuardState']
@@ -113,7 +113,7 @@ isLoop grid = isJust . find isLoop' . walkGuardPart2 grid
 stepForPart2 :: Grid -> GuardState' -> Maybe GuardState'
 stepForPart2 grid (GS' prev curr _) = case nextSquare grid curr of
   Nothing -> Nothing
-  Just Obstacle -> Just (GS' (S.insert curr prev) (turnRight curr) True)
+  Just Obstacle -> Just (GS' (S.insert curr prev) (turnRight curr) (S.member curr prev))
   Just Free -> Just (GS' prev (advance curr) False)
 
 step :: Grid -> GuardState -> Maybe GuardState
