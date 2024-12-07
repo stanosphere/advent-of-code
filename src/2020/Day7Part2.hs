@@ -1,7 +1,7 @@
 module Day7Part2 where
 
 import Data.Functor (($>))
-import Data.List (find)
+import qualified Data.Map as M
 import Data.Maybe (catMaybes)
 import Data.Tree (Tree, foldTree, unfoldTree)
 import qualified Text.Parsec as P
@@ -14,24 +14,26 @@ type BagType = String
 
 data Rule = Rule {_outer :: BagType, _inner :: [(BagType, Int)]} deriving (Show)
 
--- have to subtract off the 1 shiny gold back at the end
+type RuleMap = M.Map BagType [(BagType, Int)]
+
+-- have to subtract off the 1 shiny gold back at the end since we care only about the bags _inside_ it
 part2 :: IO Int
-part2 = (\x -> x - 1) . sumTree . buildTree <$> getInput
+part2 = (+ (-1)) . sumTree . buildTree <$> getInput
 
 sumTree :: Tree (BagType, Int) -> Int
 sumTree = foldTree (\(_, x) xs -> x * (1 + sum xs))
 
-buildTree :: [Rule] -> Tree (BagType, Int)
-buildTree xs = unfoldTree getChildren ("shiny gold", 1)
+buildTree :: RuleMap -> Tree (BagType, Int)
+buildTree ruleMap = unfoldTree getChildren ("shiny gold", 1)
   where
     getChildren :: (BagType, Int) -> ((BagType, Int), [(BagType, Int)])
-    getChildren (nodeLabel, n) =
-      ( (nodeLabel, n),
-        (maybe [] _inner . find ((== nodeLabel) . _outer)) xs
-      )
+    getChildren (nodeLabel, n) = ((nodeLabel, n), ruleMap M.! nodeLabel)
 
-getInput :: IO [Rule]
-getInput = map (unsafeParse ruleParser) . lines <$> readFile "./fixtures/input7.txt"
+getInput :: IO RuleMap
+getInput = toRuleMap . map (unsafeParse ruleParser) . lines <$> readFile "./fixtures/input7.txt"
+
+toRuleMap :: [Rule] -> RuleMap
+toRuleMap = M.fromList . map (\r -> (_outer r, _inner r))
 
 unsafeParse :: Parser a -> String -> a
 unsafeParse p s = case parse p "" s of
