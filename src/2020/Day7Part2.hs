@@ -1,23 +1,34 @@
 module Day7Part2 where
 
 import Data.Functor (($>))
+import Data.List (find)
 import Data.Maybe (catMaybes)
+import Data.Tree (Tree, foldTree, unfoldTree)
 import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 -- hmm I did part 1 like agesssss ago
 -- think I'l just try part 2 from scratch
 
--- so a rule might look like
--- drab yellow bags contain 4 light chartreuse bags, 3 striped crimson bags, 2 faded gray bags.
-
 type BagType = String
 
-data Rule = Rule
-  { _outer :: BagType,
-    inner :: [(BagType, Int)]
-  }
-  deriving (Show)
+data Rule = Rule {_outer :: BagType, _inner :: [(BagType, Int)]} deriving (Show)
+
+-- have to subtract off the 1 shiny gold back at the end
+part2 :: IO Int
+part2 = (\x -> x - 1) . sumTree . buildTree <$> getInput
+
+sumTree :: Tree (BagType, Int) -> Int
+sumTree = foldTree (\(_, x) xs -> x * (1 + sum xs))
+
+buildTree :: [Rule] -> Tree (BagType, Int)
+buildTree xs = unfoldTree getChildren ("shiny gold", 1)
+  where
+    getChildren :: (BagType, Int) -> ((BagType, Int), [(BagType, Int)])
+    getChildren (nodeLabel, n) =
+      ( (nodeLabel, n),
+        (maybe [] _inner . find ((== nodeLabel) . _outer)) xs
+      )
 
 getInput :: IO [Rule]
 getInput = map (unsafeParse ruleParser) . lines <$> readFile "./fixtures/input7.txt"
