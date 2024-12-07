@@ -2,6 +2,7 @@ module Day7 where
 
 import Data.List.Split (splitOn)
 import qualified Data.Set as S
+import Prelude hiding ((||))
 
 {-
 
@@ -21,11 +22,16 @@ data Equation = Equation {_numbers :: [Int], _result :: Int} deriving (Show)
 
 data EqState = EqState {_numberSet :: S.Set Int, _desiredResult :: Int} deriving (Show)
 
-part1 :: IO Int
-part1 = sum . map _desiredResult . filter isValid . map process <$> getInput
+type Op = Int -> Int -> Int
 
-process :: Equation -> EqState
-process eq = foldl updateState startingState xs
+part1 :: IO Int
+part1 = sum . map _desiredResult . filter isValid . map (process [(*), (+)]) <$> getInput
+
+part2 :: IO Int
+part2 = sum . map _desiredResult . filter isValid . map (process [(*), (+), (||)]) <$> getInput
+
+process :: [Op] -> Equation -> EqState
+process ops eq = foldl (updateState ops) startingState xs
   where
     startingState = EqState (S.singleton . head . _numbers $ eq) (_result eq)
     xs = tail . _numbers $ eq
@@ -33,10 +39,13 @@ process eq = foldl updateState startingState xs
 isValid :: EqState -> Bool
 isValid (EqState numberSet desiredResult) = S.member desiredResult numberSet
 
-updateState :: EqState -> Int -> EqState
-updateState (EqState numberSet desiredResult) i = EqState res desiredResult
+updateState :: [Op] -> EqState -> Int -> EqState
+updateState ops (EqState numberSet desiredResult) i = EqState res desiredResult
   where
-    res = S.unions . S.map (\n -> S.filter (<= desiredResult) . S.fromList $ [n * i, n + i]) $ numberSet
+    res = S.unions . S.map (\n -> S.filter (<= desiredResult) . S.fromList $ map (\op -> op n i) ops) $ numberSet
+
+(||) :: Int -> Int -> Int
+x || y = read (show x ++ show y)
 
 getInput :: IO [Equation]
 getInput = map parseInputLine . lines <$> readFile "./fixtures/input7.txt"
