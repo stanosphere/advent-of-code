@@ -25,10 +25,17 @@ data EqState = EqState {_numberSet :: S.Set Int, _desiredResult :: Int} deriving
 type Op = Int -> Int -> Int
 
 part1 :: IO Int
-part1 = sum . map _desiredResult . filter isValid . map (process [(*), (+)]) <$> getInput
+part1 = solve [(*), (+)] <$> getInput
 
 part2 :: IO Int
-part2 = sum . map _desiredResult . filter isValid . map (process [(*), (+), (||)]) <$> getInput
+part2 = solve [(*), (+), (||)] <$> getInput
+
+solve :: [Op] -> [Equation] -> Int
+solve ops =
+  sum
+    . map _desiredResult
+    . filter isValid
+    . map (process ops)
 
 process :: [Op] -> Equation -> EqState
 process ops eq = foldl (updateState ops) startingState xs
@@ -40,9 +47,12 @@ isValid :: EqState -> Bool
 isValid (EqState numberSet desiredResult) = S.member desiredResult numberSet
 
 updateState :: [Op] -> EqState -> Int -> EqState
-updateState ops (EqState numberSet desiredResult) i = EqState res desiredResult
+updateState ops (EqState numberSet desiredResult) i = EqState newSet desiredResult
   where
-    res = S.unions . S.map (\n -> S.filter (<= desiredResult) . S.fromList $ map (\op -> op n i) ops) $ numberSet
+    newSet =
+      S.unions
+        . S.map (\n -> S.filter (<= desiredResult) . S.fromList $ map (\op -> op n i) ops)
+        $ numberSet
 
 (||) :: Int -> Int -> Int
 x || y = read (show x ++ show y)
