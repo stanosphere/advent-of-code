@@ -37,10 +37,10 @@ solve ops =
     . map (process ops)
 
 process :: [Op] -> Equation -> EqState
-process ops eq = foldl (updateState ops) startingState xs
+process ops eqn = foldl (updateState ops) startingState xs
   where
-    startingState = EqState [head . _numbers $ eq] (_result eq)
-    xs = tail . _numbers $ eq
+    startingState = EqState [head . _numbers $ eqn] (_result eqn)
+    xs = tail . _numbers $ eqn
 
 isValid :: EqState -> Bool
 isValid (EqState numberSet desiredResult) = desiredResult `elem` numberSet
@@ -48,7 +48,8 @@ isValid (EqState numberSet desiredResult) = desiredResult `elem` numberSet
 updateState :: [Op] -> EqState -> Int -> EqState
 updateState ops (EqState numberSet desiredResult) i = EqState newList desiredResult
   where
-    newList = concatMap (\n -> filter (<= desiredResult) . map (\op -> op n i) $ ops) numberSet
+    newList = concatMap mkNewList numberSet
+    mkNewList n = filter (<= desiredResult) . map (\op -> n `op` i) $ ops
 
 (||) :: Int -> Int -> Int
 x || y = read (show x ++ show y)
