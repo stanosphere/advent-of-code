@@ -17,7 +17,7 @@ type Slope = (Int, Int)
 -- one with the most distinct slopes wins
 
 part1 :: IO Int
-part1 = solve . toGrid <$> getInput
+part1 = getMostAsteroidsSeen . toGrid <$> getInput
 
 part2 :: IO Int
 part2 = do
@@ -39,6 +39,7 @@ organiseByLineOfSight stationPosition =
 
 -- remember the y axis goes DOWN in computer science, not up like in normal science
 -- so there'll be some adding of pis shenanigans here for sure
+-- plus minus sign shenanigans
 getAngle :: Slope -> Double
 getAngle (dx, dy) = if res >= 0 then res else 2 * pi + res
   where
@@ -50,8 +51,8 @@ organiseByDistance (x0, y0) = sortOn (\(x, y) -> (x - x0) * (x - x0) + (y - y0) 
 findPositionForStation :: AsteroidPositions -> Coord
 findPositionForStation xs = maximumOn (`getAsteroidsSeen` xs) xs
 
-solve :: AsteroidPositions -> Int
-solve xs = maximum . map (`getAsteroidsSeen` xs) $ xs
+getMostAsteroidsSeen :: AsteroidPositions -> Int
+getMostAsteroidsSeen xs = maximum . map (`getAsteroidsSeen` xs) $ xs
 
 getAsteroidsSeen :: Coord -> AsteroidPositions -> Int
 getAsteroidsSeen x = S.size . S.fromList . map (getSlopeInLowestTerms x) . filter (/= x)
@@ -59,6 +60,7 @@ getAsteroidsSeen x = S.size . S.fromList . map (getSlopeInLowestTerms x) . filte
 getSlopeInLowestTerms :: Coord -> Coord -> Slope
 getSlopeInLowestTerms (x0, y0) (x1, y1) = (dx `div` gcd', dy `div` gcd')
   where
+    -- strictly speaking this is probably wrong, I think one should be the other way around but it doesn't really matter
     dx = x0 - x1
     dy = y0 - y1
     gcd' = gcd (abs dx) (abs dy)
