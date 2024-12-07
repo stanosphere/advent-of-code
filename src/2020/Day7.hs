@@ -3,7 +3,7 @@ module Day7 where
 import Data.Char (isDigit)
 import Data.List (nub)
 import Data.List.Split (splitOn)
-import Data.Map qualified as M (Map, lookup, map)
+import qualified Data.Map as M (Map, lookup, map)
 import Data.Maybe (mapMaybe)
 import Utils.Grouping (groupBy')
 
@@ -47,7 +47,7 @@ buildGraph = concatMap ((\(from, tos) -> map (\to -> (from, to)) tos) . parseLin
     parseContents = map parseContentItem . splitOn ", " . dropRight 1
 
     -- can either come as bag or bags plural
-    -- NOTE: deosn't quite work for "contains no other bags but it shuldn't matter"
+    -- NOTE: deosn't quite work for "contains no other bags but it shouldn't matter"
     parseContentItem :: String -> String
     parseContentItem item =
       let numberAndColour = dropBags item
