@@ -85,7 +85,6 @@ createOrdering :: RuleMapping -> Int -> Int -> Ordering
 createOrdering (RM beforeToAfter afterToBefore) x y
   | x == y = EQ
   | S.member y . getElems x $ beforeToAfter = GT
-  | S.member y . getElems x $ beforeToAfter = LT
   | otherwise = EQ
 
 sortList :: RuleMapping -> [Int] -> [Int]
