@@ -16,7 +16,7 @@ import Text.Parsec
     try,
     (<|>),
   )
-import Text.ParserCombinators.Parsec (Parser, parse)
+import Text.ParserCombinators.Parsec (Parser)
 
 -- hmm I did part 1 like agesssss ago
 -- think I'l just try part 2 from scratch
