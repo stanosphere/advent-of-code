@@ -13,15 +13,18 @@ data GridSize = GS {_width :: Int, _height :: Int} deriving (Show)
 data GridInfo = GI {_grid :: Grid, _gridSize :: GridSize} deriving (Show)
 
 part1 :: IO Int
-part1 = solve <$> getInput
+part1 = solve getAntiNodeLocationsForGroup <$> getInput
 
-solve :: GridInfo -> Int
-solve (GI grid gs) =
+part2 :: IO Int
+part2 = solve getAntiNodeLocationsForGroup' <$> getInput
+
+solve :: (GridSize -> [Coord] -> [Coord]) -> GridInfo -> Int
+solve antiNodeLocationGetter (GI grid gs) =
   length
     . nub
     . concat
     . M.elems
-    . M.map (getAntiNodeLocationsForGroup gs)
+    . M.map (antiNodeLocationGetter gs)
     . groupByAntennae
     $ grid
 
@@ -46,6 +49,27 @@ getAntiNodeLocations gs (x1, y1) (x2, y2) =
   where
     dx = x2 - x1
     dy = y2 - y1
+
+-- like the normal one but fills in all the locations in the grid
+getAntiNodeLocationsForGroup' :: GridSize -> [Coord] -> [Coord]
+getAntiNodeLocationsForGroup' gs xs =
+  nub . concat $
+    [ getAntiNodeLocations' gs a b
+      | a <- xs,
+        b <- xs,
+        a /= b
+    ]
+
+-- like the normal one but fills in all the locations in the grid
+getAntiNodeLocations' :: GridSize -> Coord -> Coord -> [Coord]
+getAntiNodeLocations' gs (x1, y1) (x2, y2) = allIncrease ++ allDecrease
+  where
+    dx = x2 - x1
+    dy = y2 - y1
+    increase (x, y) = (x + dx, y + dy)
+    decrease (x, y) = (x - dx, y - dy)
+    allIncrease = takeWhile (withinBounds gs) . iterate increase $ (x2, y2)
+    allDecrease = takeWhile (withinBounds gs) . iterate decrease $ (x1, y1)
 
 withinBounds :: GridSize -> Coord -> Bool
 withinBounds (GS width height) (x, y) = and [x >= 0, y >= 0, x < width, y < height]
