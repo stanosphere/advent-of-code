@@ -33,6 +33,7 @@ Happy Haskelling my future self!
 - Might as well use proper like module paths
   - i.e. rename folders to be like `Y2023` rather than `2023` and then in files I can have `module Y2023.Day15 where` rather than `module Day15 where`
 - You might need `{-# LANGUAGE ImportQualifiedPost #-}` occasionally
+- Day 12 2019 would benefit from using lenses I think! Would be nice to practice
 - Day 15 2021 might be able to be solved using the Dijkstra code you wrote
 - Dijkstra
   - I think the right abstraction might be a `class` rather than a function that takes like loads of HoFs as its argument
