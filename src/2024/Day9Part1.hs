@@ -1,4 +1,4 @@
-module Day9 where
+module Day9Part1 where
 
 import Data.Char (digitToInt)
 import Data.List (sortOn)
