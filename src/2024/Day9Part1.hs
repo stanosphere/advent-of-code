@@ -29,7 +29,10 @@ mkInitialState xs = TS holes (reverse values) []
     values = filter ((/= Free) . snd) zipped
 
 transform :: TransformState -> Maybe TransformState
-transform (TS (hIndex : holes) ((vIndex, space) : reversedValueList) newValues) = if hIndex < vIndex then Just (TS holes reversedValueList ((hIndex, space) : newValues)) else Nothing
+transform (TS (hIndex : holes) ((vIndex, space) : reversedValueList) newValues) =
+  if hIndex < vIndex
+    then Just (TS holes reversedValueList ((hIndex, space) : newValues))
+    else Nothing
 transform _ = Nothing
 
 data TransformState = TS

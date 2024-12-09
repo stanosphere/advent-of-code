@@ -19,8 +19,7 @@ data Space = Free | File Integer deriving (Show, Eq)
 
 unpack :: TransformState -> [Space]
 unpack (TS ws xs ys zs) =
-  concatMap (\(_, n, sp) -> replicate n sp) . sortOn (\(i, _, _) -> i) $
-    (ws ++ xs ++ ys ++ zs)
+  concatMap (\(_, n, sp) -> replicate n sp) . sortOn (\(i, _, _) -> i) $ concat [ws, xs, ys, zs]
 
 reOrder :: [(Int, Int, Space)] -> TransformState
 reOrder =
