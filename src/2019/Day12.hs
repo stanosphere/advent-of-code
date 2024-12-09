@@ -14,6 +14,8 @@ type MoonsState = [MoonState]
 part1 :: IO Int
 part1 = sum . map energy . (!! 1000) . iterate updateState <$> getInput
 
+-- part2 is a classic LCM trick where we treat each direction independently and then take the LCM at the end
+
 energy :: MoonState -> Int
 energy (MS _ (MP x y z) (MV vx vy vz)) = (sum . map abs $ [x, y, z]) * (sum . map abs $ [vx, vy, vz])
 
