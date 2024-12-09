@@ -1,29 +1,35 @@
 module Day9Part2 where
 
-import Data.Char (digitToInt, intToDigit)
-import Data.Foldable (find, traverse_)
-import Data.List (groupBy, sortOn)
+import Data.Char (digitToInt)
+import Data.Foldable (find)
+import Data.List (sortOn)
 import Data.Maybe (catMaybes, isJust)
 
--- part1 :: IO Int
--- part1 = checksum . reOrder . expand <$> getInput
+part2 :: IO Integer
+part2 = checksum . zip [0 ..] . unpack . reOrder . expand <$> getInput
 
-checksum :: [(Int, Space)] -> Int
+checksum :: [(Integer, Space)] -> Integer
 checksum = sum . map f
   where
     f (_, Free) = 0
     f (i, File j) = i * j
 
 -- could just use Maybe tbh
-data Space = Free | File Int deriving (Show, Eq)
+data Space = Free | File Integer deriving (Show, Eq)
 
-showTransformState :: TransformState -> String
-showTransformState (TS ws xs ys zs) = concat . map (\(i, n, sp) -> replicate n (case sp of Free -> '.'; (File x) -> intToDigit x)) . sortOn (\(i, _, _) -> i) $ (ws ++ xs ++ ys ++ zs)
+unpack :: TransformState -> [Space]
+unpack (TS ws xs ys zs) =
+  concatMap (\(_, n, sp) -> replicate n sp) . sortOn (\(i, _, _) -> i) $
+    (ws ++ xs ++ ys ++ zs)
 
-showTransformState' :: TransformState -> String
-showTransformState' (TS ws xs ys zs) = show xs
-
-reOrder xs = map showTransformState . catMaybes . takeWhile isJust . iterate (wrap transform) . Just . mkInitialState $ xs
+-- reOrder :: [(Int, Int, Space)] -> String
+reOrder =
+  last
+    . catMaybes
+    . takeWhile isJust
+    . iterate (wrap transform)
+    . Just
+    . mkInitialState
 
 mkInitialState :: [(Int, Int, Space)] -> TransformState
 mkInitialState xs = TS holes [] (reverse values) []
@@ -34,7 +40,7 @@ mkInitialState xs = TS holes [] (reverse values) []
 transform :: TransformState -> Maybe TransformState
 transform (TS _ _ [] _) = Nothing
 transform (TS fillableHoles unFillableHoles ((fileIndex, fileSize, fileId) : otherFiles) newValues) =
-  case find (\(_, holeSize, _) -> holeSize >= fileSize) fillableHoles of
+  case find (\(holeIndex, holeSize, _) -> holeSize >= fileSize && holeIndex < fileIndex) fillableHoles of
     Nothing ->
       Just
         ( TS
@@ -59,35 +65,19 @@ filHole (holeIndex, holeSize) fileSize holeList =
     else before ++ [(holeIndex + holeSize - fileSize, holeSize - fileSize, Free)] ++ after
   where
     -- could have used splitOn maybe??
-    before = takeWhile (\(x, y, z) -> x < holeIndex) holeList
-    after = dropWhile (\(x, y, z) -> x <= holeIndex) holeList
+    before = takeWhile (\(i, _, _) -> i < holeIndex) holeList
+    after = dropWhile (\(i, _, _) -> i <= holeIndex) holeList
 
 -- look for holes, if you can find one then great! fill her up
 -- if not then just put the file in the newValues list, it has basically been left alone
 
 data TransformState = TS
   { _fillableHoles :: [(Int, Int, Space)], -- holes don't really need the space in them I guess
-    _unFillableHoles :: [(Int, Int, Space)],
+    _unFillableHoles :: [(Int, Int, Space)], -- don't strictly need notion of un fillable holes but it reduces the search space in future iterations
     _reversedFileList :: [(Int, Int, Space)],
     _newValues :: [(Int, Int, Space)]
   }
   deriving (Show)
-
--- blah = groupBy f . zip [0 ..]
---   where
---     f :: (Int, Space) -> (Int, Space) -> Bool
---     f (_, x) (_, y) = g x y
---     g :: Space -> Space -> Bool
---     g Free Free = True
---     g (File _) (File _) = True
---     g Free (File _) = False
---     g (File _) Free = False
-
--- expand' :: [Char] -> [(Int, Int, Space)]
-expand' = zipWith f zipper . map digitToInt
-  where
-    zipper = iterate (\(isFile, i) -> (not isFile, if not isFile then i + 1 else i)) (True, 0)
-    f (isFile, fileIndex) n = replicate n (if isFile then File fileIndex else Free)
 
 expand :: [Char] -> [(Int, Int, Space)]
 expand = addIndexes . filter (/= []) . zipWith f zipper . map digitToInt
