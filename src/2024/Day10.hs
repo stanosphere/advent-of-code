@@ -1,7 +1,7 @@
 module Day10 where
 
 import Data.Char (digitToInt)
-import Data.List (nub)
+import Data.List.Extra (nubOrdOn)
 import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
 
@@ -17,13 +17,15 @@ part1 :: IO Int
 part1 = do
   (grid, startingPositions) <- getInput
   let startingState = map (\c -> [(c, 0)]) startingPositions
-  return . length . nub . map (\xs -> (head xs, last xs)) . findTrails grid $ startingState
+  let allTrails = findTrails grid startingState
+  return . length . nubOrdOn (\xs -> (head xs, last xs)) $ allTrails
 
 part2 :: IO Int
 part2 = do
   (grid, startingPositions) <- getInput
   let startingState = map (\c -> [(c, 0)]) startingPositions
-  return . sum . M.elems . frequencies . map (fst . last) . findTrails grid $ startingState
+  let allTrails = findTrails grid startingState
+  return . sum . M.elems . frequencies $ allTrails
 
 -- taken from Day 1 of this year, might be worth popping it in some util folder
 frequencies :: (Ord a) => [a] -> M.Map a Int
