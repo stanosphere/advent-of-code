@@ -9,14 +9,8 @@ type Coord = (Int, Int)
 
 type Grid = M.Map Coord Int
 
--- probs don't need to keep hold of like the WHOLE trail actually but might be useful for debugging if I make a mistake
--- think I'd just need the last coords visited actually
 type Trail = [(Coord, Int)]
 
--- probs don't need to keep hold of like the WHOLE trail actually but might be useful for debugging if I make a mistake
--- think I'd just need the last coords visited actually
--- also I could store the number state only once but that would be too sensible
--- I think for part 1 keeping track of all this state will genuinely be fine
 type TrailState = [Trail]
 
 part1 :: IO Int
@@ -50,8 +44,7 @@ step g = concatMap stepTrail
 neighbours :: Grid -> (Coord, Int) -> [(Coord, Int)]
 neighbours grid ((x, y), value) =
   filter ((== (value + 1)) . snd)
-    . mapMaybe
-      (\c -> fmap (\res -> (c, res)) . M.lookup c $ grid)
+    . mapMaybe (\c -> fmap (\res -> (c, res)) . M.lookup c $ grid)
     $ [ (x, y - 1),
         (x, y + 1),
         (x + 1, y),
