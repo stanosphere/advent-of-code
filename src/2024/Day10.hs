@@ -25,6 +25,18 @@ part1 = do
   let startingState = map (\c -> [(c, 0)]) startingPositions
   return . length . nub . map (\xs -> (head xs, last xs)) . findTrails grid $ startingState
 
+part2 :: IO Int
+part2 = do
+  (grid, startingPositions) <- getInput
+  let startingState = map (\c -> [(c, 0)]) startingPositions
+  return . sum . M.elems . frequencies . map (fst . last) . findTrails grid $ startingState
+
+-- taken from Day 1 of this year, might be worth popping it in some util folder
+frequencies :: (Ord a) => [a] -> M.Map a Int
+frequencies = foldr incrementMap M.empty
+  where
+    incrementMap x = M.insertWith (+) x 1
+
 findTrails :: Grid -> TrailState -> TrailState
 findTrails g = last . take 10 . iterate (step g)
 
