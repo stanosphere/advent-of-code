@@ -1,6 +1,6 @@
 module Day12 where
 
-import Data.List (groupBy, sort)
+import Data.List (sort)
 import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
@@ -29,17 +29,19 @@ type Edge = (Coord, Coord)
 -- as a sense check I could also try the same technique and switch x and y
 
 getEdgeCount :: [Coord] -> Int
-getEdgeCount xs = (sum . map countContiguousRegions $ horizontalEdges) + (sum . map countContiguousRegions $ verticalEdges)
+getEdgeCount cluster = (sum . map (length . getContiguousRegionsHoriz) $ horizontalEdges) + (sum . map (length . getContiguousRegionsVert) $ verticalEdges)
   where
-    edgesOnPerimeter = M.keys . M.filter (== 1) . frequencies . concatMap toEdges $ xs
+    edgesOnPerimeter = M.keys . M.filter (== 1) . frequencies . concatMap toEdges $ cluster
+
     horizontalEdges =
-      M.elems
+      M.toList
         . M.map sort
         . groupMap (\((_, y1), (_, _)) -> y1) (\((x1, _), (_, _)) -> x1)
         . filter isHorizontal
         $ edgesOnPerimeter
+
     verticalEdges =
-      M.elems
+      M.toList
         . M.map sort
         . groupMap (\((x1, _), (_, _)) -> x1) (\((_, y1), (_, _)) -> y1)
         . filter isVertical
@@ -59,15 +61,33 @@ getEdgeCount xs = (sum . map countContiguousRegions $ horizontalEdges) + (sum . 
         ((x, y + 1), (x + 1, y + 1))
       ]
 
-    countContiguousRegions :: [Int] -> Int
-    countContiguousRegions = length . getContiguousRegions
-
-    getContiguousRegions :: [Int] -> [[Int]]
-    getContiguousRegions = foldr folder []
+    -- I think if we consider who's above and below each edge and consider this flipping to be a change in continuity then we're good...
+    -- so I guess we can just use the sub-map to check these stay consistent
+    -- so yeah just check the above is either this region or not...
+    getContiguousRegionsHoriz :: (Int, [Int]) -> [[Int]]
+    getContiguousRegionsHoriz (y, xs) = foldr folder [] xs
       where
         folder :: Int -> [[Int]] -> [[Int]]
-        folder x [] = [[x]]
-        folder x ((y : ys) : yss) = if x + 1 == y then (x : y : ys) : yss else [x] : (y : ys) : yss
+        folder a [] = [[a]]
+        folder a ((b : bs) : bss) =
+          if a + 1 == b && inCluster (a, y) == inCluster (b, y)
+            then (a : b : bs) : bss
+            else [a] : (b : bs) : bss
+        folder _ _ = error "oops lol"
+
+    getContiguousRegionsVert :: (Int, [Int]) -> [[Int]]
+    getContiguousRegionsVert (x, ys) = foldr folder [] ys
+      where
+        folder :: Int -> [[Int]] -> [[Int]]
+        folder a [] = [[a]]
+        folder a ((b : bs) : bss) =
+          if a + 1 == b && inCluster (x, a) == inCluster (x, b)
+            then (a : b : bs) : bss
+            else [a] : (b : bs) : bss
+        folder _ _ = error "oops lol"
+
+    inCluster :: Coord -> Bool
+    inCluster (x, y) = (x, y) `elem` cluster
 
 part1 :: IO Int
 part1 =
