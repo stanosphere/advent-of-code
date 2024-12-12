@@ -21,13 +21,35 @@ type Clusters = [[Coord]]
 
 type Edge = (Coord, Coord)
 
+part1 :: IO Int
+part1 = solve getClusterScore
+
+part2 :: IO Int
+part2 = solve getClusterScore'
+
+solve :: ([Coord] -> Int) -> IO Int
+solve scoreFn =
+  sum
+    . map scoreFn
+    . toClusters
+    . parseInput
+    . lines
+    <$> readFile "./fixtures/input12.txt"
+
+getClusterScore' :: [Coord] -> Int
+getClusterScore' xs = getEdgeCount xs * getArea xs
+  where
+    getArea :: [Coord] -> Int
+    getArea = length
+
 -- get edge count
 -- so I think we can find those sub-edges which lie on the perimeter using something similar to getPerimeter
--- given these edges we can group them by x coord and sort each group by the y coord (or indeed go the other way around)
+-- given these edges we can group them by x coord and sort each group by the y coord
 -- and then each continuous sub list constitutes an edge
 -- I think this will work with shapes with holes in and all
--- as a sense check I could also try the same technique and switch x and y
-
+-- and then to get the other types of edge just swap x and y
+-- need to be careful we don't accidentally count "Möbius" edges
+-- to do this we just need to make sure that the region that we're on the perimiter of doesn't suddenly swap sides!
 getEdgeCount :: [Coord] -> Int
 getEdgeCount cluster = (sum . map (length . getContiguousRegionsHoriz) $ horizontalEdges) + (sum . map (length . getContiguousRegionsVert) $ verticalEdges)
   where
@@ -88,30 +110,6 @@ getEdgeCount cluster = (sum . map (length . getContiguousRegionsHoriz) $ horizon
 
     inCluster :: Coord -> Bool
     inCluster (x, y) = (x, y) `elem` cluster
-
-part1 :: IO Int
-part1 =
-  sum
-    . map getClusterScore
-    . toClusters
-    . parseInput
-    . lines
-    <$> readFile "./fixtures/input12.txt"
-
-part2 :: IO Int
-part2 =
-  sum
-    . map getClusterScore'
-    . toClusters
-    . parseInput
-    . lines
-    <$> readFile "./fixtures/input12.txt"
-
-getClusterScore' :: [Coord] -> Int
-getClusterScore' xs = getEdgeCount xs * getArea xs
-  where
-    getArea :: [Coord] -> Int
-    getArea = length
 
 getClusterScore :: [Coord] -> Int
 getClusterScore xs = getPerimeter xs * getArea xs
