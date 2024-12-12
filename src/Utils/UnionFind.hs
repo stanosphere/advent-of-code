@@ -33,8 +33,6 @@ clusterLeader uf x = _leaderMap uf M.! x
 
 unionClusters :: (Ord a) => UnionFind a -> a -> a -> UnionFind a
 unionClusters uf x y =
-  -- should really only move stuff over in the smaller cluster tbh...
-  -- but for this problem probably don't need to worry too much
   if xLeader == yLeader then uf else UF newLeaderMap newClusterMap
   where
     xLeader = clusterLeader uf x
@@ -42,6 +40,12 @@ unionClusters uf x y =
     -- only need stuff below here if x and y are in different clusters
     clusterX = _clusterMap uf M.! xLeader
     clusterY = _clusterMap uf M.! yLeader
-    unionCluster = S.union clusterX clusterY
-    newClusterMap = M.delete yLeader . M.insert xLeader unionCluster . _clusterMap $ uf
-    newLeaderMap = foldr (`M.insert` xLeader) (_leaderMap uf) . S.toList $ clusterY
+
+    ((smallestLeader, smallestCluster), (largestLeader, largestCluster)) =
+      if S.size clusterX < S.size clusterY
+        then ((xLeader, clusterX), (yLeader, clusterY))
+        else ((yLeader, clusterY), (xLeader, clusterX))
+
+    unionCluster = S.union largestCluster smallestCluster
+    newClusterMap = M.delete smallestLeader . M.insert largestLeader unionCluster . _clusterMap $ uf
+    newLeaderMap = foldr (`M.insert` largestLeader) (_leaderMap uf) . S.toList $ smallestCluster
