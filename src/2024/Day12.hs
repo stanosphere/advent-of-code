@@ -49,7 +49,7 @@ getClusterScore' xs = getEdgeCount xs * getArea xs
 -- I think this will work with shapes with holes in and all
 -- and then to get the other types of edge just swap x and y
 -- need to be careful we don't accidentally count "Möbius" edges
--- to do this we just need to make sure that the region that we're on the perimiter of doesn't suddenly swap sides!
+-- to do this we just need to make sure that the region that we're on the perimeter of doesn't suddenly swap sides!
 getEdgeCount :: [Coord] -> Int
 getEdgeCount cluster = (sum . map (length . getContiguousRegionsHoriz) $ horizontalEdges) + (sum . map (length . getContiguousRegionsVert) $ verticalEdges)
   where
@@ -87,26 +87,26 @@ getEdgeCount cluster = (sum . map (length . getContiguousRegionsHoriz) $ horizon
     -- so I guess we can just use the sub-map to check these stay consistent
     -- so yeah just check the above is either this region or not...
     getContiguousRegionsHoriz :: (Int, [Int]) -> [[Int]]
-    getContiguousRegionsHoriz (y, xs) = foldr folder [] xs
+    getContiguousRegionsHoriz (y, xs) = foldr append [] xs
       where
-        folder :: Int -> [[Int]] -> [[Int]]
-        folder a [] = [[a]]
-        folder a ((b : bs) : bss) =
+        append :: Int -> [[Int]] -> [[Int]]
+        append a [] = [[a]]
+        append a ((b : bs) : bss) =
           if a + 1 == b && inCluster (a, y) == inCluster (b, y)
             then (a : b : bs) : bss
             else [a] : (b : bs) : bss
-        folder _ _ = error "oops lol"
+        append _ _ = error "oops lol"
 
     getContiguousRegionsVert :: (Int, [Int]) -> [[Int]]
-    getContiguousRegionsVert (x, ys) = foldr folder [] ys
+    getContiguousRegionsVert (x, ys) = foldr append [] ys
       where
-        folder :: Int -> [[Int]] -> [[Int]]
-        folder a [] = [[a]]
-        folder a ((b : bs) : bss) =
+        append :: Int -> [[Int]] -> [[Int]]
+        append a [] = [[a]]
+        append a ((b : bs) : bss) =
           if a + 1 == b && inCluster (x, a) == inCluster (x, b)
             then (a : b : bs) : bss
             else [a] : (b : bs) : bss
-        folder _ _ = error "oops lol"
+        append _ _ = error "oops lol"
 
     inCluster :: Coord -> Bool
     inCluster (x, y) = (x, y) `elem` cluster
@@ -118,7 +118,6 @@ getClusterScore xs = getPerimeter xs * getArea xs
     -- if an edge appears more than once then it can't be on the perimeter
     -- if an edge appears exactly once then it must be on the perimeter
     -- there is surely a less silly way of doing this...
-    -- getPerimeter :: [Coord] -> Int
     getPerimeter :: [Coord] -> Int
     getPerimeter = M.size . M.filter (== 1) . frequencies . concatMap toEdges
       where
@@ -134,7 +133,13 @@ getClusterScore xs = getPerimeter xs * getArea xs
     getArea = length
 
 toClusters :: [(Coord, Char)] -> Clusters
-toClusters grid = map S.toList . M.elems . UF.clusterMap . foldl (uncurry . UF.unionClusters) initial . getUnionsToApply $ grid
+toClusters grid =
+  map S.toList
+    . M.elems
+    . UF.clusterMap
+    . foldl (uncurry . UF.unionClusters) initial
+    . getUnionsToApply
+    $ grid
   where
     initial = UF.fromList . map fst $ grid
 
