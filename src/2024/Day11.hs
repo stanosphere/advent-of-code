@@ -2,6 +2,7 @@ module Day11 where
 
 import Data.List.Split (splitOn)
 import qualified Data.Map as M
+import Utils.Grouping (frequencies)
 
 -- apparently the official name is Multiset https://en.wikipedia.org/wiki/Multiset
 type Bag = M.Map Int Int
@@ -41,9 +42,3 @@ splitInHalf xs = case splitAt splitIndex xs of (l, r) -> [l, r]
 
 getInput :: IO [Int]
 getInput = map read . splitOn " " <$> readFile "./fixtures/input11.txt"
-
--- taken from Day 1 and Day 10 of this year, might be worth popping it in some util module now that it's used 3 times
-frequencies :: (Ord a) => [a] -> M.Map a Int
-frequencies = foldr incrementMap M.empty
-  where
-    incrementMap x = M.insertWith (+) x 1

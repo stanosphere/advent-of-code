@@ -1,12 +1,12 @@
 -- this module is essentially Scala functions related to grouping that I find useful implemented in Haskell
-module Utils.Grouping (groupMap, groupMapReduce, groupBy', windows, pairs) where
+module Utils.Grouping (groupMap, groupMapReduce, groupBy', windows, pairs, frequencies) where
 
 import Data.Function (on)
 import Data.List (groupBy, sortOn, tails)
-import Data.Map (Map, fromList)
+import Data.Map (Map, empty, fromList, insertWith)
 
 -- inspired by scala function of the same name
-groupMap :: Ord k => (a -> k) -> (a -> v) -> [a] -> Map k [v]
+groupMap :: (Ord k) => (a -> k) -> (a -> v) -> [a] -> Map k [v]
 groupMap keyBy mapBy =
   fromList
     . map (\xs -> (keyBy . head $ xs, map mapBy xs))
@@ -14,7 +14,7 @@ groupMap keyBy mapBy =
     . sortOn keyBy
 
 -- inspired by the scala function of the same name
-groupMapReduce :: Ord k => (a -> k) -> (a -> v) -> (v -> v -> v) -> [a] -> Map k v
+groupMapReduce :: (Ord k) => (a -> k) -> (a -> v) -> (v -> v -> v) -> [a] -> Map k v
 groupMapReduce keyBy mapBy combine =
   fromList
     . map (\xs -> (keyBy . head $ xs, foldl1 combine . map mapBy $ xs))
@@ -22,7 +22,7 @@ groupMapReduce keyBy mapBy combine =
     . sortOn keyBy
 
 -- this works like scala's groupBy in the sense that elements need not be adjacent in the original list to be grouped
-groupBy' :: Ord k => (a -> k) -> [a] -> Map k [a]
+groupBy' :: (Ord k) => (a -> k) -> [a] -> Map k [a]
 groupBy' f =
   fromList
     . map (\xs -> (f . head $ xs, xs))
@@ -42,3 +42,8 @@ pairs = map f . windows 2
 -- works on infinite lists and everything
 windows :: Int -> [a] -> [[a]]
 windows n = takeWhile ((n ==) . length) . map (take n) . tails
+
+frequencies :: (Ord a) => [a] -> Map a Int
+frequencies = foldr incrementMap empty
+  where
+    incrementMap x = insertWith (+) x 1

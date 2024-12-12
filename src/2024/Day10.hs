@@ -4,6 +4,7 @@ import Data.Char (digitToInt)
 import Data.List.Extra (nubOrdOn)
 import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
+import Utils.Grouping (frequencies)
 
 type Coord = (Int, Int)
 
@@ -26,12 +27,6 @@ part2 = do
   let startingState = map (\c -> [(c, 0)]) startingPositions
   let allTrails = findTrails grid startingState
   return . sum . M.elems . frequencies $ allTrails
-
--- taken from Day 1 of this year, might be worth popping it in some util folder
-frequencies :: (Ord a) => [a] -> M.Map a Int
-frequencies = foldr incrementMap M.empty
-  where
-    incrementMap x = M.insertWith (+) x 1
 
 findTrails :: Grid -> TrailState -> TrailState
 findTrails g = last . take 10 . iterate (step g)
