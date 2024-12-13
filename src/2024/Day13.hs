@@ -5,16 +5,7 @@ import Data.Maybe (mapMaybe)
 import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
--- it costs 3 tokens to push the A button
--- and 1 token to push the B button
-
--- i think maybe lagrange multipliers is the way????
--- minimise something subject to something else
--- oh no I think they're actually not underdetermined at all are they
--- so let's just solve the simultaneous equations and see if there are integer solutions
--- being careful to detect if any are underdetermined or overdetermined just in case
-
--- so each input is a set of equations like like
+-- so each input is a set of equations like
 
 -- z1 = y1 a + x2 b
 -- z2 = y2 a + x2 b
@@ -71,38 +62,30 @@ inputParser = P.sepBy equationParser (P.newline *> P.newline)
   where
     equationParser :: Parser (Equation, Equation)
     equationParser = do
-      (y1, y2) <- firstLineParser
-      _ <- P.newline
-      (x1, x2) <- secondLineParser
-      _ <- P.newline
+      (y1, y2) <- firstLineParser <* P.newline
+      (x1, x2) <- secondLineParser <* P.newline
       (z1, z2) <- thirdLineParser
       return (Eqn z1 y1 x1, Eqn z2 y2 x2)
 
     -- Button A: X+46, Y+68
     firstLineParser :: Parser (Int, Int)
     firstLineParser = do
-      _ <- P.string "Button A: X+"
-      y1 <- intParser
-      _ <- P.string ", Y+"
-      y2 <- intParser
+      y1 <- P.string "Button A: X+" *> intParser
+      y2 <- P.string ", Y+" *> intParser
       return (y1, y2)
 
     -- Button B: X+34, Y+14
     secondLineParser :: Parser (Int, Int)
     secondLineParser = do
-      _ <- P.string "Button B: X+"
-      x1 <- intParser
-      _ <- P.string ", Y+"
-      x2 <- intParser
+      x1 <- P.string "Button B: X+" *> intParser
+      x2 <- P.string ", Y+" *> intParser
       return (x1, x2)
 
     -- Prize: X=11306, Y=10856
     thirdLineParser :: Parser (Int, Int)
     thirdLineParser = do
-      _ <- P.string "Prize: X="
-      z1 <- intParser
-      _ <- P.string ", Y="
-      z2 <- intParser
+      z1 <- P.string "Prize: X=" *> intParser
+      z2 <- P.string ", Y=" *> intParser
       return (z1, z2)
 
     intParser :: Parser Int
