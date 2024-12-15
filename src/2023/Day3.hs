@@ -5,7 +5,7 @@ module Day3 where
 
 import Data.Char (isDigit)
 import Data.List (nub)
-import Data.Map qualified as M (Map, filter, fromList, keys, member)
+import qualified Data.Map as M (Map, filter, fromList, keys, member)
 
 type Coords = (Int, Int)
 

@@ -3,7 +3,7 @@ module Day14 where
 import Data.Foldable (traverse_)
 import Data.List (tails)
 import Data.List.Split (splitOn)
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
     filter,
     fromList,
@@ -14,7 +14,7 @@ import Data.Map qualified as M
     member,
     notMember,
   )
-import Data.Set qualified as S
+import qualified Data.Set as S
   ( Set,
     fromList,
     map,
@@ -130,5 +130,5 @@ windows n = takeWhile ((n ==) . length) . map (take n) . tails
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
 
-fromSet :: Ord k => a -> S.Set k -> M.Map k a
+fromSet :: (Ord k) => a -> S.Set k -> M.Map k a
 fromSet x = M.fromList . map (\k -> (k, x)) . S.toList

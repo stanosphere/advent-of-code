@@ -4,18 +4,15 @@ module Day14 where
 
 import Control.Applicative (ZipList (ZipList, getZipList))
 import Control.Arrow ((&&&))
-import Data.Bifunctor qualified as BiFunc
+import qualified Data.Bifunctor as BiFunc
 import Data.List
   ( group,
     sort,
     tails,
   )
 import Data.List.Split (splitOn)
-import Data.Map qualified as M
-import Data.Monoid
-  ( Sum (Sum, getSum),
-    (<>),
-  )
+import qualified Data.Map as M
+import Data.Monoid (Sum (Sum, getSum), (<>))
 
 type PairInsertionMap = M.Map String String
 

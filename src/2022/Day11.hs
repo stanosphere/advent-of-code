@@ -1,6 +1,5 @@
 module Day11 where
 
-import Data.Foldable (traverse_)
 import Data.List (sortOn)
 import Data.List.Split (chunksOf)
 import Data.Map
@@ -108,7 +107,7 @@ mkOperation s
 
 mkTest :: (String, String, String) -> (Int -> Int)
 mkTest (testLine, trueLine, falseLine) =
-  let n :: Int = read . drop 21 $ testLine
+  let n = read . drop 21 $ testLine
    in ( \x ->
           if x `rem` n == 0
             then read . drop 29 $ trueLine

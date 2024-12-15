@@ -1,7 +1,7 @@
 module Day7 where
 
 import Data.Foldable (find)
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
     delete,
     filter,
@@ -11,7 +11,7 @@ import Data.Map qualified as M
     null,
     union,
   )
-import Data.Set qualified as S
+import qualified Data.Set as S
   ( difference,
     fromList,
   )

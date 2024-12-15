@@ -3,7 +3,7 @@ module Day13 where
 import Data.Foldable (traverse_)
 import Data.List (sort)
 import Data.List.Split (chunksOf)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
   ( char,
     digit,
     many1,
@@ -16,7 +16,6 @@ import Text.Parsec.String (Parser)
 data Tree = Value Int | List [Tree] deriving (Show, Eq)
 
 instance Ord Tree where
-  compare :: Tree -> Tree -> Ordering
   compare (Value x) (Value y) = compare x y
   compare (List xs) (List ys) = compare xs ys
   compare (Value x) (List ys) = compare (List [Value x]) (List ys)

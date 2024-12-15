@@ -9,7 +9,7 @@ import Data.Map
     union,
     (!),
   )
-import Data.Set qualified as S
+import qualified Data.Set as S
   ( Set,
     intersection,
     map,

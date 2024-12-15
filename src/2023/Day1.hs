@@ -23,13 +23,13 @@ getCalibration' s = read [intToDigit . head $ digits, intToDigit . last $ digits
   where
     digits = toDigits s
 
-data State = State {chars :: String, foundDigits :: [Int]}
+data State = State {_chars :: String, _foundDigits :: [Int]}
 
-toDigits :: Foldable t => t Char -> [Int]
-toDigits = foundDigits . foldr f (State [] [])
+toDigits :: (Foldable t) => t Char -> [Int]
+toDigits = _foundDigits . foldr f (State [] [])
   where
     f :: Char -> State -> State
-    f char (State {chars, foundDigits})
+    f char (State chars foundDigits)
       | isDigit char = State [] (digitToInt char : foundDigits)
       | length chars >= 2 = case maybeDigitString of
           Just digit -> State chars' (digit : foundDigits)

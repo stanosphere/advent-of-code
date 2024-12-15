@@ -6,7 +6,7 @@ import Data.List
     isPrefixOf,
   )
 import Data.List.Split (splitOn)
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
     alter,
     empty,
@@ -29,13 +29,10 @@ data Edge = Edge
   }
 
 instance Show Edge where
-  show :: Edge -> String
   show e = "{ source:'" ++ fromId e ++ "', target:'" ++ toId e ++ "'},"
 
 instance Show Node where
-  show :: Node -> String
-  show n =
-    "{ id:'" ++ nodeId n ++ "', label:'" ++ (show . flowRate $ n) ++ "'},"
+  show n = "{ id:'" ++ nodeId n ++ "', label:'" ++ (show . flowRate $ n) ++ "'},"
 
 part1 :: IO ()
 part1 = do

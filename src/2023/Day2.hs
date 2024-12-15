@@ -1,7 +1,7 @@
 module Day2 where
 
-import Data.Map qualified as M (Map, elems, findWithDefault, fromList, unionWith)
-import Text.Parsec qualified as P
+import qualified Data.Map as M (Map, elems, findWithDefault, fromList, unionWith)
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 -- could also use a more precise datatype if I wanted I suppose

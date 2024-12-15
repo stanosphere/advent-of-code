@@ -3,9 +3,8 @@
 module Day15 where
 
 import Data.Char (digitToInt)
-import Data.Map qualified as M
+import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
-import Data.Set qualified as S
 
 data Point = Point
   { x :: Int,

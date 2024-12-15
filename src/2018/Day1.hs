@@ -1,7 +1,7 @@
 module Day1 where
 
 import Data.List (find)
-import Data.Set qualified as S
+import qualified Data.Set as S
   ( Set,
     empty,
     insert,

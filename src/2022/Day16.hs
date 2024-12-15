@@ -2,8 +2,8 @@ module Day16 where
 
 import Data.List (partition, sortOn)
 import Data.List.Split (splitOn)
-import Data.Map qualified as M (Map, (!))
-import Data.Set qualified as S
+import qualified Data.Map as M (Map, (!))
+import qualified Data.Set as S
   ( Set,
     empty,
     fromList,

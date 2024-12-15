@@ -7,7 +7,7 @@
 module Day6 where
 
 import Data.List.Split (splitOn)
-import Data.Map qualified as M (Map, elems, filter)
+import qualified Data.Map as M (Map, elems, filter)
 import Utils.Grouping (groupBy')
 
 data Point = P {x :: Int, y :: Int} deriving (Show)

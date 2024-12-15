@@ -1,7 +1,7 @@
 module Day7Part2 where
 
 import Data.Foldable (find)
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
     delete,
     filter,
@@ -13,7 +13,7 @@ import Data.Map qualified as M
     union,
     (!),
   )
-import Data.Set qualified as S (difference, fromList)
+import qualified Data.Set as S (difference, fromList)
 import Utils.Grouping (groupMap)
 
 data Edge = Edge {from :: Char, to :: Char} deriving (Show)

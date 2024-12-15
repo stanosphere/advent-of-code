@@ -48,7 +48,7 @@ mkCommand (SS state np outs) =
       len = length raw
       padding = replicate (5 - len) '0'
       blah = padding ++ raw
-      opCode :: Int = read . drop 3 $ blah
+      opCode = read . drop 3 $ blah :: Int
    in undefined
 
 part1 :: IO ()
