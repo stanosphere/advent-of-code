@@ -1,4 +1,4 @@
-module Day15 where
+module Day15Part1 where
 
 import Data.Bifunctor (second)
 import Data.Foldable (traverse_)
@@ -14,6 +14,7 @@ type Coord = (Int, Int)
 
 type Grid = M.Map Coord GridSquare
 
+part1 :: IO ()
 part1 = do
   (grid, moves, startingPosition) <- getInput
   let res = last . processMoves startingPosition grid $ moves
