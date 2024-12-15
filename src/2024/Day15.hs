@@ -16,8 +16,11 @@ type Grid = M.Map Coord GridSquare
 
 part1 = do
   (grid, moves, startingPosition) <- getInput
-  let stuff = last . processMoves startingPosition grid $ moves
-  display stuff
+  let res = last . processMoves startingPosition grid $ moves
+  let (_, finalGrid) = res
+  let score = sum . map (\(x, y) -> x + 100 * y) . M.keys . M.filter (== Box) $ finalGrid
+  display res
+  print score
 
 display :: (Coord, Grid) -> IO ()
 display (robotPosition, grid) = traverse_ putStrLn [[toChar (x, y) | x <- [0 .. maxX]] | y <- [0 .. maxY]]
