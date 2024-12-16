@@ -1,7 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-module Utils.Dijkstra (dijkstra, StartNode, EndNode, DijkstraState) where
+module Utils.Dijkstra (dijkstra, dijkstraVisitAll, StartNode, EndNode, DijkstraState (visited, unVisited)) where
 
 -- based on my day 12 2022 implementation and heavily refactored + improved
 -- assuming score is always an int but can probs generalise
@@ -11,7 +11,7 @@ module Utils.Dijkstra (dijkstra, StartNode, EndNode, DijkstraState) where
 
 import Control.Monad ((<=<))
 import Data.List.Extra (find, minimumOn)
-import Data.Map qualified as M (Map, alter, delete, empty, insert, notMember, singleton, toList)
+import Data.Map qualified as M (Map, alter, delete, empty, insert, notMember, null, singleton, toList)
 import Data.Maybe (isJust)
 
 type StartNode nodeId = nodeId
@@ -31,7 +31,7 @@ type FinalisedDistances nodeId = M.Map nodeId Int
 -- in scala I'd make this a trait where you have to specify the functions
 -- maybe this can be done in Haskell by making it a class rather than a function?
 dijkstra ::
-  Ord nodeId =>
+  (Ord nodeId) =>
   (nodeId -> nodeId -> Int) -> -- scoreFn
   (nodeId -> [nodeId]) -> -- neighbourGetter
   (nodeId -> Bool) -> -- end node check
@@ -42,8 +42,20 @@ dijkstra scoreFn neighbourGetter isEndNode startNode = res
     res = foundEndNode <=< find (isJust . foundEndNode) . iterate (dijkstraStep scoreFn neighbourGetter isEndNode) $ dInit
     dInit = DState M.empty (M.singleton startNode 0) Nothing
 
+-- version of dijkstra that visits all nodes
+dijkstraVisitAll ::
+  (Ord nodeId) =>
+  (nodeId -> nodeId -> Int) -> -- scoreFn
+  (nodeId -> [nodeId]) -> -- neighbourGetter
+  StartNode nodeId ->
+  Maybe (DijkstraState nodeId)
+dijkstraVisitAll scoreFn neighbourGetter startNode = res
+  where
+    res = find (M.null . unVisited) . iterate (dijkstraStep scoreFn neighbourGetter (const False)) $ dInit
+    dInit = DState M.empty (M.singleton startNode 0) Nothing
+
 dijkstraStep ::
-  Ord nodeId =>
+  (Ord nodeId) =>
   (nodeId -> nodeId -> Int) ->
   (nodeId -> [nodeId]) ->
   (nodeId -> Bool) ->
@@ -59,14 +71,14 @@ dijkstraStep scoreFn neighbourGetter isEndNode (DState visited unVisited _) = DS
     foundEndNode' = if isEndNode currentNodeId then Just (currentNodeId, currentNodeDist) else Nothing
 
 updateNeighbours ::
-  Ord nodeId =>
+  (Ord nodeId) =>
   TentativeDistances nodeId ->
   [(nodeId, Int)] ->
   TentativeDistances nodeId
 updateNeighbours = foldl updateNeighbour
 
 updateNeighbour ::
-  Ord nodeId =>
+  (Ord nodeId) =>
   TentativeDistances nodeId ->
   (nodeId, Int) ->
   TentativeDistances nodeId

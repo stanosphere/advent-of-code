@@ -1,4 +1,4 @@
-module Day16 where
+module Day16Part1 where
 
 import qualified Data.Map as M
 import qualified Data.Set as S
