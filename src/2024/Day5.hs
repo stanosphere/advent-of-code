@@ -82,7 +82,7 @@ reduceRuleMapping xs rm = RM (reduceRuleMap . _beforeToAfter $ rm) (reduceRuleMa
 -- hmmmmm looks like I only need half the mapping...
 -- same is probably true in part one then!!!
 createOrdering :: RuleMapping -> Int -> Int -> Ordering
-createOrdering (RM beforeToAfter afterToBefore) x y
+createOrdering (RM beforeToAfter _) x y
   | x == y = EQ
   | S.member y . getElems x $ beforeToAfter = GT
   | otherwise = EQ

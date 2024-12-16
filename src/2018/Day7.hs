@@ -21,14 +21,14 @@ data Edge = Edge {from :: Char, to :: Char} deriving (Show)
 
 type TaskMap = M.Map Char [Char]
 
-data State = State {taskMap :: TaskMap, stepOrder :: [Char]} deriving (Show)
+data State = State {_taskMap :: TaskMap, _stepOrder :: [Char]} deriving (Show)
 
 -- gives answer of IJLFUVDACEHGRZPNKQWSBTMXOY in 0.03 seconds
 part1 :: IO ()
 part1 = do
   inp <- getLines "./fixtures/input7.txt"
   let initState = State (toTaskMap . map parseRelationship $ inp) []
-  print . fmap (reverse . stepOrder) . find (M.null . taskMap) . iterate step $ initState
+  print . fmap (reverse . _stepOrder) . find (M.null . _taskMap) . iterate step $ initState
 
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)

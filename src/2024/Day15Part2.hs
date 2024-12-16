@@ -22,13 +22,14 @@ type Grid = M.Map Coord GridSquare
 
 data BoxPath = BP {_boxes :: [Coord], _endsInWall :: Bool}
 
+part2 :: IO Int
 part2 = do
   (grid, moves, startingPosition) <- getInput
   let res = last . processMoves startingPosition grid $ moves
   let (_, finalGrid) = res
   let score = sum . map (\(x, y) -> x + 100 * y) . M.keys . M.filter (== Box) $ finalGrid
   display res
-  print score
+  return score
 
 display :: (Coord, Grid) -> IO ()
 display (robotPosition, grid) = traverse_ putStrLn [[toChar (x, y) | x <- [0 .. maxX]] | y <- [0 .. maxY]]
@@ -57,22 +58,22 @@ attemptMove D c g = attemptMoveDown c g
 attemptMoveLeft :: Coord -> Grid -> (Coord, Grid)
 attemptMoveLeft (x0, y0) grid =
   case (M.lookup (x0 - 1, y0) grid, M.lookup (x0 - 2, y0) grid) of
-    (_, Just Box) -> processBoxesLeft (x0, y0) (x0 - 2, y0) grid
+    (_, Just Box) -> processBoxesLeft (x0, y0) (x0 - 2, y0)
     (Just Wall, _) -> ((x0, y0), grid)
     (_, _) -> ((x0 - 1, y0), grid)
   where
-    processBoxesLeft :: Coord -> Coord -> Grid -> (Coord, Grid)
-    processBoxesLeft (rx, ry) boxCoords grid = case boxPath of
+    processBoxesLeft :: Coord -> Coord -> (Coord, Grid)
+    processBoxesLeft (rx, ry) boxCoords = case boxPath of
       (BP _ True) -> ((rx, ry), grid)
       (BP oldBoxPositions False) -> ((rx - 1, ry), foldl processOldBoxPosition grid oldBoxPositions)
       where
-        boxPath = getBoxPathLeft boxCoords grid (BP [] False)
+        boxPath = getBoxPathLeft boxCoords (BP [] False)
         processOldBoxPosition g (x1, y1) = M.delete (x1, y1) . M.insert (x1 - 1, y1) Box $ g
 
-    getBoxPathLeft :: Coord -> Grid -> BoxPath -> BoxPath
-    getBoxPathLeft (x, y) grid (BP acc _) =
+    getBoxPathLeft :: Coord -> BoxPath -> BoxPath
+    getBoxPathLeft (x, y) (BP acc _) =
       case (nextSquare', nextSquare'') of
-        (_, Just Box) -> getBoxPathLeft (x - 2, y) grid (BP acc' False)
+        (_, Just Box) -> getBoxPathLeft (x - 2, y) (BP acc' False)
         (Nothing, _) -> BP acc' False
         (Just Wall, _) -> BP acc' True
         (Just Box, _) -> error "oops"
@@ -86,22 +87,22 @@ attemptMoveRight (x0, y0) grid =
   case M.lookup (x0 + 1, y0) grid of
     Nothing -> ((x0 + 1, y0), grid)
     Just Wall -> ((x0, y0), grid)
-    Just Box -> processBoxesRight (x0, y0) (x0 + 1, y0) grid
+    Just Box -> processBoxesRight (x0, y0) (x0 + 1, y0)
   where
-    processBoxesRight :: Coord -> Coord -> Grid -> (Coord, Grid)
-    processBoxesRight (rx, ry) boxCoords grid = case boxPath of
+    processBoxesRight :: Coord -> Coord -> (Coord, Grid)
+    processBoxesRight (rx, ry) boxCoords = case boxPath of
       (BP _ True) -> ((rx, ry), grid)
       (BP oldBoxPositions False) -> ((rx + 1, ry), foldl processOldBoxPosition grid oldBoxPositions)
       where
-        boxPath = getBoxPathRight boxCoords grid (BP [] False)
+        boxPath = getBoxPathRight boxCoords (BP [] False)
         processOldBoxPosition g (x1, y1) = M.delete (x1, y1) . M.insert (x1 + 1, y1) Box $ g
 
-    getBoxPathRight :: Coord -> Grid -> BoxPath -> BoxPath
-    getBoxPathRight (x, y) grid (BP acc _) =
+    getBoxPathRight :: Coord -> BoxPath -> BoxPath
+    getBoxPathRight (x, y) (BP acc _) =
       case nextSquare' of
         Nothing -> BP acc' False
         Just Wall -> BP acc' True
-        Just Box -> getBoxPathRight (x + 2, y) grid (BP acc' False)
+        Just Box -> getBoxPathRight (x + 2, y) (BP acc' False)
       where
         nextSquare' = M.lookup (x + 2, y) grid
         acc' = (x, y) : acc
@@ -145,13 +146,13 @@ attemptMoveDown (x0, y0) grid = case (M.lookup (x0, y0 + 1) grid, M.lookup (x0 -
 
 attemptMoveUp :: Coord -> Grid -> (Coord, Grid)
 attemptMoveUp (x0, y0) grid = case (M.lookup (x0, y0 - 1) grid, M.lookup (x0 - 1, y0 - 1) grid) of
-  (_, Just Box) -> processBoxesUp (x0, y0) (x0 - 1, y0 - 1) grid
-  (Just Box, _) -> processBoxesUp (x0, y0) (x0, y0 - 1) grid
+  (_, Just Box) -> processBoxesUp (x0, y0) (x0 - 1, y0 - 1)
+  (Just Box, _) -> processBoxesUp (x0, y0) (x0, y0 - 1)
   (Just Wall, _) -> ((x0, y0), grid)
   (_, _) -> ((x0, y0 - 1), grid)
   where
-    processBoxesUp :: Coord -> Coord -> Grid -> (Coord, Grid)
-    processBoxesUp (rx, ry) boxCoords grid = case boxPath of
+    processBoxesUp :: Coord -> Coord -> (Coord, Grid)
+    processBoxesUp (rx, ry) boxCoords = case boxPath of
       (BP _ True) -> ((rx, ry), grid)
       (BP oldBoxPositions False) -> ((rx, ry - 1), foldl processOldBoxPosition grid oldBoxPositions)
       where
