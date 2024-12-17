@@ -1,11 +1,28 @@
 module Day17 where
 
+import Control.Monad (when)
 import Data.Bits (xor)
+import Data.Foldable (traverse_)
 import Data.List.Extra ((!?))
 import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 data Machine = Machine {_a :: Int, _b :: Int, _c :: Int, _output :: [Int], _pointer :: Int} deriving (Show)
+
+part2 = do
+  (machine, program) <- getInput
+  let iter = [0 ..]
+  let results = takeWhile (\(_, x) -> not x) . map (\x -> (x, checkIfSame x program machine)) $ iter
+  traverse_ showResult results
+
+showResult :: (Int, Bool) -> IO ()
+showResult (x, True) = putStrLn ("RESULT FOUND: " ++ show x)
+showResult (x, False) = when (x `mod` 1000000 == 0) $ putStrLn ("got up to: " ++ show x)
+
+checkIfSame :: Int -> [Int] -> Machine -> Bool
+checkIfSame aValue program machine = (== program) . _output . run program $ machine'
+  where
+    machine' = machine {_a = aValue}
 
 part1 :: IO ()
 part1 = do
