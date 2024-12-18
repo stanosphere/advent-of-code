@@ -27,6 +27,7 @@ dependencies:
   - transformers
   - array
   - mtl
+  - psqueues
 
 ghc-options:
   - -Wall

@@ -1,4 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Utils.Dijkstra (dijkstra, dijkstraVisitAll, StartNode, EndNode, DijkstraState (visited, unVisited)) where
@@ -12,7 +11,7 @@ module Utils.Dijkstra (dijkstra, dijkstraVisitAll, StartNode, EndNode, DijkstraS
 import Control.Monad ((<=<))
 import Data.List (foldl')
 import Data.List.Extra (find, minimumOn)
-import Data.Map qualified as M (Map, alter, delete, empty, insert, notMember, null, singleton, toList)
+import qualified Data.Map as M (Map, alter, delete, empty, insert, notMember, null, singleton, toList)
 import Data.Maybe (isJust)
 
 type StartNode nodeId = nodeId

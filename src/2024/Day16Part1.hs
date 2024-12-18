@@ -2,7 +2,7 @@ module Day16Part1 where
 
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Utils.Dijkstra (dijkstra)
+import Utils.Dijkstra2 (dijkstra)
 
 data Direction = N | E | S | W deriving (Show, Eq, Ord)
 
@@ -17,12 +17,9 @@ part1 = do
 
 solve :: [Coord] -> Coord -> Coord -> Maybe (Node, Int)
 solve coords startCoord endCoord =
-  dijkstra scoreFn neighbourGetter isEndNode startNode
+  dijkstra neighbourGetter isEndNode startNode
   where
-    scoreFn :: Node -> Node -> Int
-    scoreFn x y = scoreMap M.! (x, y)
-
-    neighbourGetter :: Node -> [Node]
+    neighbourGetter :: Node -> [(Node, Int)]
     neighbourGetter n = neighbourMap M.! n
 
     isEndNode :: Node -> Bool
@@ -34,7 +31,7 @@ solve coords startCoord endCoord =
     coordSet = S.fromList coords
     neighbourMap =
       M.fromList
-        . map (\n -> (n, map fst . nodeToNeighbours coordSet $ n))
+        . map (\n -> (n, nodeToNeighbours coordSet $ n))
         . coordsToNodes
         $ coords
     scoreMap =
