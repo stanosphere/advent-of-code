@@ -1,6 +1,8 @@
 module Utils.PSQ (PSQ, empty, insert, minView, null, singleton) where
 
 -- actually I think HashPSQ is better, let's see if this all works first though!
+-- it is slightly better but adds a bit more boilerplate if you ever want to use this algo in real life!!
+-- (i.e. deriving the Hashable instances so I'll stick with Ord for now)
 import qualified Data.OrdPSQ as Q (OrdPSQ, empty, insert, minView, null, singleton)
 import Prelude hiding (null)
 
