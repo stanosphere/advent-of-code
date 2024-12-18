@@ -1,5 +1,6 @@
 module Day18 where
 
+import Data.Foldable (traverse_)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Text.Parsec as P
@@ -12,14 +13,26 @@ data GridSize = GS {_width :: Int, _height :: Int}
 
 type Grid = S.Set Coord
 
+part2 :: IO ()
+part2 = do
+  input <- getInput
+  let gridSize = GS 71 71
+  let fallenBitsToTry = [1024 ..]
+  let res = map (\fallenBits -> (fallenBits, solve' (take fallenBits input) gridSize)) fallenBitsToTry
+  traverse_ print res
+
 part1 :: IO (Maybe (Coord, Int))
 part1 = do
   input <- getInput
   let gridSize = GS 71 71
   let fallenBits = 1024
-  let grid = mkGrid gridSize (S.fromList . take fallenBits $ input)
-  let res = solve gridSize grid
+  let res = solve' (take fallenBits input) gridSize
   return res
+
+solve' :: [Coord] -> GridSize -> Maybe (Coord, Int)
+solve' xs gs = solve gs grid
+  where
+    grid = mkGrid gs (S.fromList xs)
 
 solve :: GridSize -> Grid -> Maybe (Coord, Int)
 solve (GS width height) grid = dijkstra scoreFn neighbourGetter isEndNode startNode
