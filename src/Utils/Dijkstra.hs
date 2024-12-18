@@ -10,6 +10,7 @@ module Utils.Dijkstra (dijkstra, dijkstraVisitAll, StartNode, EndNode, DijkstraS
 -- note: `<=<` is basically the same as `.` but for monadic functions
 
 import Control.Monad ((<=<))
+import Data.List (foldl')
 import Data.List.Extra (find, minimumOn)
 import Data.Map qualified as M (Map, alter, delete, empty, insert, notMember, null, singleton, toList)
 import Data.Maybe (isJust)
@@ -25,6 +26,7 @@ data DijkstraState nodeId = DState
   }
   deriving (Show)
 
+-- as per the comment above `getCurrentNode` this should really be a sorted map of some kind
 type TentativeDistances nodeId = M.Map nodeId Int
 
 type FinalisedDistances nodeId = M.Map nodeId Int
@@ -76,7 +78,7 @@ updateNeighbours ::
   TentativeDistances nodeId ->
   [(nodeId, Int)] ->
   TentativeDistances nodeId
-updateNeighbours = foldl updateNeighbour
+updateNeighbours = foldl' updateNeighbour
 
 updateNeighbour ::
   (Ord nodeId) =>
