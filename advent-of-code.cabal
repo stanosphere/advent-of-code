@@ -23,7 +23,7 @@ source-repository head
 
 library
   exposed-modules:
-      Utils.Dijkstra2
+      Utils.Dijkstra
       Utils.DijkstraOld
       Utils.Grouping
       Utils.Linear

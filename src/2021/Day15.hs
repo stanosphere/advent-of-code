@@ -1,90 +1,57 @@
-{-# LANGUAGE TupleSections #-}
-
 module Day15 where
 
 import Data.Char (digitToInt)
-import qualified Data.Map as M
+import qualified Data.Map as M (Map, fromList, lookup)
 import Data.Maybe (mapMaybe)
+import Utils.Dijkstra (DijkstraResult, dijkstra)
 
-data Point = Point
-  { x :: Int,
-    y :: Int
-  }
-  deriving (Ord, Eq)
+type Coord = (Int, Int)
 
 type Risk = Int
 
 type AccumulatedRisk = Int
 
-type Grid = M.Map Point Risk
+type Grid = M.Map Coord Risk
 
-type Path = [(Point, Risk)]
+data GridSize = GS {_maxX :: Int, _maxY :: Int}
 
-type UnvisitedNodes = M.Map Point (Risk, AccumulatedRisk)
+part1 :: IO (DijkstraResult Coord Risk)
+part1 = uncurry solve <$> getInput
 
-type VisitedNodes = M.Map Point Risk
+solve :: Grid -> GridSize -> DijkstraResult Coord Risk
+solve grid (GS maxX maxY) = dijkstra neighbourGetter isEndNode startNode
+  where
+    neighbourGetter :: Coord -> [(Coord, Risk)]
+    neighbourGetter = nodeToNeighbours grid
 
-type UnvisitedNode = (Point, (Risk, AccumulatedRisk))
+    isEndNode :: Coord -> Bool
+    isEndNode coord = coord == (maxX, maxY)
 
-dijkstra :: (UnvisitedNodes, VisitedNodes) -> (UnvisitedNodes, VisitedNodes)
-dijkstra (unvisited, visited) =
-  let (currentPoint, (_, currentAccumulatedRisk)) =
-        getSmallestUnvisited unvisited
-      res =
-        foldr
-          ( uncurry M.insert
-              . (\(p, (r, tr)) -> (p, (r, min tr (r + currentAccumulatedRisk))))
-          )
-          unvisited
-          . getNeighbours unvisited
-          $ currentPoint
-   in (res, M.delete currentPoint visited)
+    startNode :: Coord
+    startNode = (0, 0)
 
-getSmallestUnvisited :: UnvisitedNodes -> UnvisitedNode
-getSmallestUnvisited = M.findMin
+-- nodeToNeighbours :: Grid -> Coord -> [Coord]
+nodeToNeighbours :: Grid -> Coord -> [(Coord, Risk)]
+nodeToNeighbours grid (x, y) = mapMaybe (`lookup'` grid) [(x, y - 1), (x, y + 1), (x + 1, y), (x - 1, y)]
 
--- I suspect this will be very much a djikstra thing
--- Mark all nodes unvisited. Create a set of all the unvisited nodes called the unvisited set.
--- Assign to every node a tentative distance value: set it to zero for our initial node and to infinity for all other nodes. The tentative distance of a node v is the length of the shortest path discovered so far between the node v and the starting node. Since initially no path is known to any other vertex than the source itself (which is a path of length zero), all other tentative distances are initially set to infinity. Set the initial node as current.
--- For the current node, consider all of its unvisited neighbors and calculate their tentative distances through the current node. Compare the newly calculated tentative distance to the current assigned value and assign the smaller one. For example, if the current node A is marked with a distance of 6, and the edge connecting it with a neighbor B has length 2, then the distance to B through A will be 6 + 2 = 8. If B was previously marked with a distance greater than 8 then change it to 8. Otherwise, the current value will be kept.
--- When we are done considering all of the unvisited neighbors of the current node, mark the current node as visited and remove it from the unvisited set. A visited node will never be checked again.
--- If the destination node has been marked visited (when planning a route between two specific nodes) or if the smallest tentative distance among the nodes in the unvisited set is infinity (when planning a complete traversal; occurs when there is no connection between the initial node and remaining unvisited nodes), then stop. The algorithm has finished.
--- Otherwise, select the unvisited node that is marked with the smallest tentative distance, set it as the new current node, and go back to step 3.
+lookup' :: (Ord k) => k -> M.Map k v -> Maybe (k, v)
+lookup' key mp = case M.lookup key mp of
+  Nothing -> Nothing
+  Just value -> Just (key, value)
 
-getNextPoints :: Point -> [Point]
-getNextPoints Point {x = x, y = y} =
-  [ Point {x = x + 1, y = y},
-    Point {x = x, y = y + 1},
-    Point {x = x - 1, y = y},
-    Point {x = x, y = y - 1}
-  ]
+getInput :: IO (Grid, GridSize)
+getInput = parseGrid . lines <$> readFile "./fixtures/input15.txt"
 
-getNeighbours :: UnvisitedNodes -> Point -> [UnvisitedNode]
-getNeighbours us = mapMaybe (\k -> fmap (k,) (M.lookup k us)) . getNextPoints
-
--- boring parsing stuff below here
-toyGrid :: Grid
-toyGrid =
-  parseGrid
-    [ "1163751742",
-      "1381373672",
-      "2136511328",
-      "3694931569",
-      "7463417111",
-      "1319128137",
-      "1359912421",
-      "3125421639",
-      "1293138521",
-      "2311944581"
-    ]
-
-parseGrid :: [[Char]] -> Grid
-parseGrid grid =
-  M.fromList
-    [ (Point i j, digitToInt elem)
-      | (i, row) <- zipWithIndex grid,
-        (j, elem) <- zipWithIndex row
-    ]
+parseGrid :: [[Char]] -> (Grid, GridSize)
+parseGrid input = (M.fromList gridAsList, GS maxX maxY)
+  where
+    gridAsList =
+      [ ((i, j), digitToInt char)
+        | (j, row) <- zip [0 ..] input,
+          (i, char) <- zip [0 ..] row
+      ]
+    maxX = maximum . map (fst . fst) $ gridAsList
+    maxY = maximum . map (snd . fst) $ gridAsList
 
 zipWithIndex :: [a] -> [(Int, a)]
 zipWithIndex = zip [0 ..]
