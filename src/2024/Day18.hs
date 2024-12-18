@@ -1,11 +1,12 @@
 module Day18 where
 
-import Data.Foldable (traverse_)
+import Data.List (find)
 import qualified Data.Map as M
+import Data.Maybe (fromJust)
 import qualified Data.Set as S
 import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
-import Utils.Dijkstra (dijkstra)
+import Utils.Dijkstra2 (Result (QueueEmptied), dijkstra)
 
 type Coord = (Int, Int)
 
@@ -13,35 +14,38 @@ data GridSize = GS {_width :: Int, _height :: Int}
 
 type Grid = S.Set Coord
 
-part2 :: IO ()
-part2 = do
-  input <- getInput
-  let gridSize = GS 71 71
-  let fallenBitsToTry = [1024 ..]
-  let res = map (\fallenBits -> (fallenBits, solve' (take fallenBits input) gridSize)) fallenBitsToTry
-  traverse_ print res
-
-part1 :: IO (Maybe (Coord, Int))
+part1 :: IO (Maybe (Result Coord Int))
 part1 = do
   input <- getInput
-  let gridSize = GS 71 71
-  let fallenBits = 1024
-  let res = solve' (take fallenBits input) gridSize
-  return res
+  return . solve' (take fallenBits input) $ gridSize
+  where
+    gridSize = GS 71 71
+    fallenBits = 1024
 
-solve' :: [Coord] -> GridSize -> Maybe (Coord, Int)
+part2 :: IO Coord
+part2 = do
+  input <- getInput
+  let res =
+        fst
+          . fromJust
+          . find ((== Just QueueEmptied) . snd)
+          . map (\fallenBits -> (fallenBits, solve' (take fallenBits input) gridSize))
+          $ fallenBitsToTry
+  return (input !! (res - 1))
+  where
+    gridSize = GS 71 71
+    fallenBitsToTry = [1024 ..]
+
+solve' :: [Coord] -> GridSize -> Maybe (Result Coord Int)
 solve' xs gs = solve gs grid
   where
     grid = mkGrid gs (S.fromList xs)
 
-solve :: GridSize -> Grid -> Maybe (Coord, Int)
-solve (GS width height) grid = dijkstra scoreFn neighbourGetter isEndNode startNode
+solve :: GridSize -> Grid -> Maybe (Result Coord Int)
+solve (GS width height) grid = dijkstra neighbourGetter isEndNode startNode
   where
-    scoreFn :: Coord -> Coord -> Int
-    scoreFn _ _ = 1
-
-    neighbourGetter :: Coord -> [Coord]
-    neighbourGetter n = neighbourMap M.! n
+    neighbourGetter :: Coord -> [(Coord, Int)]
+    neighbourGetter = map (\x -> (x, 1)) . (neighbourMap M.!)
 
     isEndNode :: Coord -> Bool
     isEndNode coord = coord == (width - 1, height - 1)

@@ -2,7 +2,7 @@ module Day16Part1 where
 
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Utils.Dijkstra2 (dijkstra)
+import Utils.Dijkstra2 (Result, dijkstra)
 
 data Direction = N | E | S | W deriving (Show, Eq, Ord)
 
@@ -10,12 +10,12 @@ type Coord = (Int, Int)
 
 data Node = Nd {_position :: Coord, _orientation :: Direction} deriving (Eq, Show, Ord)
 
-part1 :: IO (Maybe (Node, Int))
+part1 :: IO (Maybe (Result Node Int))
 part1 = do
   (coords, start, end) <- parseInput . lines <$> readFile "./fixtures/input16.txt"
   return (solve coords start end)
 
-solve :: [Coord] -> Coord -> Coord -> Maybe (Node, Int)
+solve :: [Coord] -> Coord -> Coord -> Maybe (Result Node Int)
 solve coords startCoord endCoord =
   dijkstra neighbourGetter isEndNode startNode
   where

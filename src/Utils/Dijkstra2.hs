@@ -1,4 +1,4 @@
-module Utils.Dijkstra2 (dijkstra) where
+module Utils.Dijkstra2 (dijkstra, Result (QueueEmptied)) where
 
 -- inspired by https://github.com/GuillaumedeVolpiano/adventOfCode/blob/master/lib/Helpers/Search/Int.hs
 -- essentially a combo of my old dijkstra and the above
@@ -17,10 +17,12 @@ import Utils.PSQ as Q (PSQ, insert, minView, null, singleton)
 
 type TentativeDistances node score = M.Map node score
 
+data Result node score = FoundEndNode (node, score) | QueueEmptied deriving (Show, Eq)
+
 data DijkstraState node score = DState
   { _tentative :: TentativeDistances node score,
     _queue :: PSQ node score,
-    _foundEndNode :: Maybe (node, score)
+    _result :: Maybe (Result node score)
   }
 
 type StartNode node = node
@@ -32,10 +34,10 @@ dijkstra ::
   (node -> [(node, score)]) -> -- neighbourGetter
   (node -> Bool) -> -- isEndNode
   StartNode node -> -- startNode
-  Maybe (EndNode node, score) -- I suppose this could be a few different end conditions
+  Maybe (Result node score) -- I suppose this could be a few different end conditions
 dijkstra neighbourGetter isEndNode startNode = res
   where
-    res = _foundEndNode <=< find (isJust . _foundEndNode) . iterate (dijkstraStep neighbourGetter isEndNode) $ dInit
+    res = _result <=< find (isJust . _result) . iterate (dijkstraStep neighbourGetter isEndNode) $ dInit
     dInit = DState (M.singleton startNode 0) (Q.singleton startNode 0) Nothing
 
 dijkstraStep ::
@@ -45,8 +47,8 @@ dijkstraStep ::
   DijkstraState node score ->
   DijkstraState node score
 dijkstraStep neighbourGetter isEndNode (DState tentative queue _)
-  | Q.null queue = error "queue empty!"
-  | isEndNode currentNode = DState tentative queue (Just (currentNode, tentative M.! currentNode))
+  | Q.null queue = DState tentative queue (Just QueueEmptied)
+  | isEndNode currentNode = DState tentative queue (Just (FoundEndNode (currentNode, tentative M.! currentNode)))
   | otherwise = DState tentative' queue' Nothing
   where
     (currentNode, currentNodeScore, restOfQueue) = fromJust . Q.minView $ queue
