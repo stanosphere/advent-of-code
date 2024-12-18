@@ -45,6 +45,9 @@ dijkstra neighbourGetter isEndNode startNode = dijkstraRec neighbourGetter isEnd
   where
     dInit = DState (M.singleton startNode 0) (Q.singleton startNode 0)
 
+-- TODO for 2024/D16/P2 I think we will want something that returns the full DijkstraState
+-- which, to be fair, won't be hard
+
 dijkstraRec ::
   (Num score, Ord score, Ord node) =>
   (node -> [(node, score)]) -> -- neighbourGetter

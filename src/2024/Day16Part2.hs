@@ -2,8 +2,9 @@ module Day16Part2 where
 
 import Data.List (nub)
 import qualified Data.Map as M
+import Data.Maybe (fromJust)
 import qualified Data.Set as S
-import Utils.Dijkstra (DijkstraState (visited), dijkstraVisitAll)
+import Utils.Dijkstra (DijkstraState (_visited), dijkstraVisitAll)
 import Prelude hiding (flip)
 
 data Direction = N | E | S | W deriving (Show, Eq, Ord)
@@ -19,11 +20,11 @@ part2 :: IO ()
 part2 = do
   (coords, start, end) <- parseInput . lines <$> readFile "./fixtures/input16.txt"
   let startNode = Nd start E
-  let res = visited . unsafeGet . solve coords $ startNode
-  let res1 = visited . unsafeGet . solve coords $ Nd end N
-  let res2 = visited . unsafeGet . solve coords $ Nd end E
-  let res3 = visited . unsafeGet . solve coords $ Nd end S
-  let res4 = visited . unsafeGet . solve coords $ Nd end W
+  let res = _visited . fromJust . solve coords $ startNode
+  let res1 = _visited . fromJust . solve coords $ Nd end N
+  let res2 = _visited . fromJust . solve coords $ Nd end E
+  let res3 = _visited . fromJust . solve coords $ Nd end S
+  let res4 = _visited . fromJust . solve coords $ Nd end W
 
   let allNodes = coordsToNodes coords
 
@@ -33,10 +34,6 @@ part2 = do
   let res4' = filter (\(Nd pos dir) -> bestPathScore == (res M.! Nd pos dir + res4 M.! Nd pos (flip dir))) allNodes
 
   print . length . nub . map _position $ (res1' ++ res2' ++ res3' ++ res4')
-
-unsafeGet :: Maybe a -> a
-unsafeGet Nothing = error "oops"
-unsafeGet (Just x) = x
 
 solve :: [Coord] -> Node -> Maybe (DijkstraState Node)
 solve coords = dijkstraVisitAll scoreFn neighbourGetter
