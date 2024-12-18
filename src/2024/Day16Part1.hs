@@ -2,7 +2,7 @@ module Day16Part1 where
 
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Utils.Dijkstra2 (DijkstraResult, dijkstra)
+import Utils.Dijkstra (DijkstraResult, dijkstra)
 
 data Direction = N | E | S | W deriving (Show, Eq, Ord)
 

@@ -1,97 +1,79 @@
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+module Utils.Dijkstra
+  ( dijkstra,
+    DijkstraResult (QueueEmptied, FoundEndNode),
+    StartNode,
+    EndNode,
+  )
+where
 
-module Utils.Dijkstra (dijkstra, dijkstraVisitAll, StartNode, EndNode, DijkstraState (_visited, _unVisited)) where
+-- inspired by https://github.com/GuillaumedeVolpiano/adventOfCode/blob/master/lib/Helpers/Search/Int.hs
+-- essentially a combo of my old dijkstra and the above
 
--- based on my day 12 2022 implementation and heavily refactored + improved
--- assuming score is always an int but can probs generalise
--- should probably rename *dist* to *score* at some point...
+import Data.Map as M
+  ( Map,
+    insert,
+    notMember,
+    singleton,
+    (!),
+  )
+import Data.Maybe (fromJust, mapMaybe)
+import Utils.PSQ as Q (PSQ, insert, minView, null, singleton)
 
--- note: `<=<` is basically the same as `.` but for monadic functions
+type TentativeDistances node score = M.Map node score
 
-import Control.Monad ((<=<))
-import Data.List (foldl')
-import Data.List.Extra (find, minimumOn)
-import qualified Data.Map as M (Map, alter, delete, empty, insert, notMember, null, singleton, toList)
-import Data.Maybe (isJust)
+data DijkstraResult node score
+  = FoundEndNode (node, score)
+  | QueueEmptied -- maybe AllNodesVisited would be a more accurate description
+  deriving (Show, Eq)
 
-type StartNode nodeId = nodeId
-
-type EndNode nodeId = nodeId
-
-data DijkstraState nodeId = DState
-  { _visited :: FinalisedDistances nodeId,
-    _unVisited :: TentativeDistances nodeId,
-    _foundEndNode :: Maybe (nodeId, Int)
+data DijkstraState node score = DState
+  { _tentative :: TentativeDistances node score,
+    _queue :: PSQ node score
   }
-  deriving (Show)
 
--- as per the comment above `getCurrentNode` this should really be a sorted map of some kind
-type TentativeDistances nodeId = M.Map nodeId Int
+type StartNode node = node
 
-type FinalisedDistances nodeId = M.Map nodeId Int
+type EndNode node = node
 
--- in scala I'd make this a trait where you have to specify the functions
--- maybe this can be done in Haskell by making it a class rather than a function?
 dijkstra ::
-  (Ord nodeId) =>
-  (nodeId -> nodeId -> Int) -> -- scoreFn
-  (nodeId -> [nodeId]) -> -- neighbourGetter
-  (nodeId -> Bool) -> -- end node check
-  StartNode nodeId ->
-  Maybe (EndNode nodeId, Int)
-dijkstra scoreFn neighbourGetter isEndNode startNode = res
+  (Num score, Ord score, Ord node) =>
+  (node -> [(node, score)]) -> -- neighbourGetter
+  (EndNode node -> Bool) -> -- isEndNode
+  StartNode node -> -- startNode
+  DijkstraResult node score
+dijkstra neighbourGetter isEndNode startNode = dijkstraRec neighbourGetter isEndNode dInit
   where
-    res = _foundEndNode <=< find (isJust . _foundEndNode) . iterate (dijkstraStep scoreFn neighbourGetter isEndNode) $ dInit
-    dInit = DState M.empty (M.singleton startNode 0) Nothing
+    dInit = DState (M.singleton startNode 0) (Q.singleton startNode 0)
 
--- version of dijkstra that visits all nodes
-dijkstraVisitAll ::
-  (Ord nodeId) =>
-  (nodeId -> nodeId -> Int) -> -- scoreFn
-  (nodeId -> [nodeId]) -> -- neighbourGetter
-  StartNode nodeId ->
-  Maybe (DijkstraState nodeId)
-dijkstraVisitAll scoreFn neighbourGetter startNode = res
+-- TODO for 2024/D16/P2 I think we will want something that returns the full DijkstraState
+-- which, to be fair, won't be hard
+
+dijkstraRec ::
+  (Num score, Ord score, Ord node) =>
+  (node -> [(node, score)]) -> -- neighbourGetter
+  (node -> Bool) -> -- isEndNode
+  DijkstraState node score ->
+  DijkstraResult node score
+dijkstraRec neighbourGetter isEndNode (DState tentative queue)
+  | Q.null queue = QueueEmptied
+  | isEndNode currentNode = FoundEndNode (currentNode, tentative M.! currentNode)
+  | otherwise = dijkstraRec neighbourGetter isEndNode (DState tentative' queue')
   where
-    res = find (M.null . _unVisited) . iterate (dijkstraStep scoreFn neighbourGetter (const False)) $ dInit
-    dInit = DState M.empty (M.singleton startNode 0) Nothing
+    (currentNode, currentNodeScore, restOfQueue) = fromJust . Q.minView $ queue
+    neighboursToUpdate = mapMaybe (getNeighboursToUpdate tentative currentNodeScore) . neighbourGetter $ currentNode
+    queue' = foldr (uncurry Q.insert) restOfQueue neighboursToUpdate
+    tentative' = foldr (uncurry M.insert) tentative neighboursToUpdate
 
-dijkstraStep ::
-  (Ord nodeId) =>
-  (nodeId -> nodeId -> Int) ->
-  (nodeId -> [nodeId]) ->
-  (nodeId -> Bool) ->
-  DijkstraState nodeId ->
-  DijkstraState nodeId
-dijkstraStep scoreFn neighbourGetter isEndNode (DState visited unVisited _) = DState visited' unVisited' foundEndNode'
-  where
-    (currentNodeId, currentNodeDist) = getCurrentNode unVisited
-    neighbours = filter (`M.notMember` visited) . neighbourGetter $ currentNodeId
-    neighboursWithScores = map (\n -> (n, currentNodeDist + scoreFn currentNodeId n)) neighbours
-    unVisited' = M.delete currentNodeId . updateNeighbours unVisited $ neighboursWithScores
-    visited' = M.insert currentNodeId currentNodeDist visited
-    foundEndNode' = if isEndNode currentNodeId then Just (currentNodeId, currentNodeDist) else Nothing
+-- could do the above in a single fold if we _really_ wanted to but it's prettier how it is
+-- state' = foldr (\(node, score) (DState m q) -> DState (M.insert node score m) (Q.insert node score q)) (DState tentative restOfQueue) neighboursToUpdate
 
-updateNeighbours ::
-  (Ord nodeId) =>
-  TentativeDistances nodeId ->
-  [(nodeId, Int)] ->
-  TentativeDistances nodeId
-updateNeighbours = foldl' updateNeighbour
-
-updateNeighbour ::
-  (Ord nodeId) =>
-  TentativeDistances nodeId ->
-  (nodeId, Int) ->
-  TentativeDistances nodeId
-updateNeighbour distanceMap (neighbor, newScore) = M.alter alterFn neighbor distanceMap
-  where
-    alterFn :: Maybe Int -> Maybe Int
-    alterFn (Just oldScore) = Just (min oldScore newScore)
-    alterFn Nothing = Just newScore
-
--- I think really this should be more like a queue than having to iterate through a map each time
--- I think what we really want is something like scala's Sorted set https://www.scala-lang.org/api/2.13.4/scala/collection/SortedSet.html
--- But for day 12 2022 each part finishes in < 0.2 secs so I think we're good
-getCurrentNode :: TentativeDistances nodeId -> (nodeId, Int)
-getCurrentNode = minimumOn snd . M.toList
+getNeighboursToUpdate ::
+  (Ord node, Ord score, Num score) =>
+  TentativeDistances node score ->
+  score ->
+  (node, score) ->
+  Maybe (node, score)
+getNeighboursToUpdate tentative currentNodeScore (nodeId, edgeScore)
+  | nodeId `M.notMember` tentative = Just (nodeId, currentNodeScore + edgeScore)
+  | currentNodeScore + edgeScore < tentative M.! nodeId = Just (nodeId, currentNodeScore + edgeScore)
+  | otherwise = Nothing

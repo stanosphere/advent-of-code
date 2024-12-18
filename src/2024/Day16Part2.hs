@@ -4,7 +4,7 @@ import Data.List (nub)
 import qualified Data.Map as M
 import Data.Maybe (fromJust)
 import qualified Data.Set as S
-import Utils.Dijkstra (DijkstraState (_visited), dijkstraVisitAll)
+import Utils.DijkstraOld (DijkstraState (_visited), dijkstraVisitAll)
 import Prelude hiding (flip)
 
 data Direction = N | E | S | W deriving (Show, Eq, Ord)

@@ -4,7 +4,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
-import Utils.Dijkstra2 (DijkstraResult (FoundEndNode, QueueEmptied), dijkstra)
+import Utils.Dijkstra (DijkstraResult (FoundEndNode, QueueEmptied), dijkstra)
 
 type Coord = (Int, Int)
 

@@ -5,7 +5,7 @@ import Data.Char (ord)
 import qualified Data.Map as M (Map, findWithDefault, fromList, lookup, toList)
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S (Set, fromList, member)
-import Utils.Dijkstra2 (EndNode, StartNode, dijkstra)
+import Utils.Dijkstra (EndNode, StartNode, dijkstra)
 
 type Coord = (Int, Int)
 
