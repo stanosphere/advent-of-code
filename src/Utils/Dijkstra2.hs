@@ -1,9 +1,8 @@
-module Utils.Dijkstra2 (dijkstra, Result (QueueEmptied)) where
+module Utils.Dijkstra2 (dijkstra, DijkstraResult (QueueEmptied, FoundEndNode)) where
 
 -- inspired by https://github.com/GuillaumedeVolpiano/adventOfCode/blob/master/lib/Helpers/Search/Int.hs
 -- essentially a combo of my old dijkstra and the above
 
-import Control.Monad ((<=<))
 import Data.Foldable (find)
 import Data.Map as M
   ( Map,
@@ -17,12 +16,12 @@ import Utils.PSQ as Q (PSQ, insert, minView, null, singleton)
 
 type TentativeDistances node score = M.Map node score
 
-data Result node score = FoundEndNode (node, score) | QueueEmptied deriving (Show, Eq)
+data DijkstraResult node score = FoundEndNode (node, score) | QueueEmptied deriving (Show, Eq)
 
 data DijkstraState node score = DState
   { _tentative :: TentativeDistances node score,
     _queue :: PSQ node score,
-    _result :: Maybe (Result node score)
+    _result :: Maybe (DijkstraResult node score)
   }
 
 type StartNode node = node
@@ -32,12 +31,17 @@ type EndNode node = node
 dijkstra ::
   (Num score, Ord score, Ord node) =>
   (node -> [(node, score)]) -> -- neighbourGetter
-  (node -> Bool) -> -- isEndNode
+  (EndNode node -> Bool) -> -- isEndNode
   StartNode node -> -- startNode
-  Maybe (Result node score) -- I suppose this could be a few different end conditions
-dijkstra neighbourGetter isEndNode startNode = res
+  DijkstraResult node score -- I suppose this could be a few different end conditions
+dijkstra neighbourGetter isEndNode startNode =
+  fromJust
+    . _result
+    . fromJust
+    . find (isJust . _result)
+    . iterate (dijkstraStep neighbourGetter isEndNode)
+    $ dInit
   where
-    res = _result <=< find (isJust . _result) . iterate (dijkstraStep neighbourGetter isEndNode) $ dInit
     dInit = DState (M.singleton startNode 0) (Q.singleton startNode 0) Nothing
 
 dijkstraStep ::

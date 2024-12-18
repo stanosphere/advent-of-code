@@ -1,12 +1,10 @@
 module Day18 where
 
-import Data.List (find)
 import qualified Data.Map as M
-import Data.Maybe (fromJust)
 import qualified Data.Set as S
 import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
-import Utils.Dijkstra2 (Result (QueueEmptied), dijkstra)
+import Utils.Dijkstra2 (DijkstraResult (FoundEndNode, QueueEmptied), dijkstra)
 
 type Coord = (Int, Int)
 
@@ -14,7 +12,9 @@ data GridSize = GS {_width :: Int, _height :: Int}
 
 type Grid = S.Set Coord
 
-part1 :: IO (Maybe (Result Coord Int))
+type Result = DijkstraResult Coord Int
+
+part1 :: IO Result
 part1 = do
   input <- getInput
   return . solve' (take fallenBits input) $ gridSize
@@ -25,23 +25,35 @@ part1 = do
 part2 :: IO Coord
 part2 = do
   input <- getInput
-  let res =
-        fst
-          . fromJust
-          . find ((== Just QueueEmptied) . snd)
-          . map (\fallenBits -> (fallenBits, solve' (take fallenBits input) gridSize))
-          $ fallenBitsToTry
+  let searchFunction fallenBits = solve' (take fallenBits input) gridSize
+  let initBounds = BSB 1025 3449 (searchFunction 1025) (searchFunction 3449)
+  let res = binSearch initBounds searchFunction
   return (input !! (res - 1))
   where
     gridSize = GS 71 71
-    fallenBitsToTry = [1024 ..]
 
-solve' :: [Coord] -> GridSize -> Maybe (Result Coord Int)
+data BinSearchBounds = BSB {_lo :: Int, _hi :: Int, _loResult :: Result, _hiResult :: Result}
+
+binSearch :: BinSearchBounds -> (Int -> Result) -> Int
+binSearch (BSB lo hi loResult hiResult) f =
+  if hi - lo == 1
+    then hi
+    else
+      ( case (loResult, midResult, hiResult) of
+          (FoundEndNode _, FoundEndNode _, QueueEmptied) -> binSearch (BSB mid hi midResult hiResult) f
+          (FoundEndNode _, QueueEmptied, QueueEmptied) -> binSearch (BSB lo mid loResult midResult) f
+          _ -> error "who ordered that???"
+      )
+  where
+    mid = (hi + lo) `div` 2
+    midResult = f mid
+
+solve' :: [Coord] -> GridSize -> Result
 solve' xs gs = solve gs grid
   where
     grid = mkGrid gs (S.fromList xs)
 
-solve :: GridSize -> Grid -> Maybe (Result Coord Int)
+solve :: GridSize -> Grid -> Result
 solve (GS width height) grid = dijkstra neighbourGetter isEndNode startNode
   where
     neighbourGetter :: Coord -> [(Coord, Int)]
