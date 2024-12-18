@@ -1,4 +1,10 @@
-module Utils.Dijkstra2 (dijkstra, DijkstraResult (QueueEmptied, FoundEndNode)) where
+module Utils.Dijkstra2
+  ( dijkstra,
+    DijkstraResult (QueueEmptied, FoundEndNode),
+    StartNode,
+    EndNode,
+  )
+where
 
 -- inspired by https://github.com/GuillaumedeVolpiano/adventOfCode/blob/master/lib/Helpers/Search/Int.hs
 -- essentially a combo of my old dijkstra and the above

@@ -5,17 +5,17 @@ import Data.Char (ord)
 import qualified Data.Map as M (Map, findWithDefault, fromList, lookup, toList)
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S (Set, fromList, member)
-import Utils.Dijkstra (EndNode, StartNode, dijkstra)
+import Utils.Dijkstra2 (EndNode, StartNode, dijkstra)
 
-data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)
+type Coord = (Int, Int)
 
-data Node = Node {coords :: Coords, elevation :: Elevation}
+data Node = Node {coords :: Coord, elevation :: Elevation}
 
-type Edges = M.Map Coords [Coords]
+type Edges = M.Map Coord [Coord]
 
 type Elevation = Int
 
-type Nodes = M.Map Coords Elevation
+type Nodes = M.Map Coord Elevation
 
 -- 0.17 secs
 -- answer: 380
@@ -41,19 +41,18 @@ part2 = solve startNodeSelector endNodeSelector edgeSelector
         then Just . coords $ candidateToNode
         else Nothing
 
-solve :: (Char -> Bool) -> (Char -> Bool) -> (Node -> Node -> Maybe Coords) -> IO ()
+solve :: (Char -> Bool) -> (Char -> Bool) -> (Node -> Node -> Maybe Coord) -> IO ()
 solve startNodeSelector endNodeSelector edgeSelector = do
   input <- getLines "./fixtures/input12.txt"
   let (nodes, startNode, endNodes) = getNodes startNodeSelector endNodeSelector input
   let edges = getEdges edgeSelector nodes
-  let neighbourGetter n = M.findWithDefault [] n edges
-  let scoreFn _ _ = 1
+  let neighbourGetter n = map (\x -> (x, 1)) . M.findWithDefault [] n $ edges
   let isEndNode x = S.member x endNodes
-  let res = dijkstra scoreFn neighbourGetter isEndNode startNode
+  let res = dijkstra neighbourGetter isEndNode startNode
   print res
 
 -- so much parsing stuff!
-getEdges :: (Node -> Node -> Maybe Coords) -> Nodes -> Edges
+getEdges :: (Node -> Node -> Maybe Coord) -> Nodes -> Edges
 getEdges shouldKeepEdge nds =
   M.fromList
     . map
@@ -61,18 +60,18 @@ getEdges shouldKeepEdge nds =
     . M.toList
     $ nds
 
-mkEdgesForSingleNode :: (Node -> Node -> Maybe Coords) -> (Node, [Node]) -> (Coords, [Coords])
+mkEdgesForSingleNode :: (Node -> Node -> Maybe Coord) -> (Node, [Node]) -> (Coord, [Coord])
 mkEdgesForSingleNode shouldKeepEdge (fromNode, candidateTos) =
   (coords fromNode, mapMaybe (shouldKeepEdge fromNode) candidateTos)
 
 getAdjacent :: Nodes -> Node -> (Node, [Node])
 getAdjacent nodeMap nd =
-  let ndCoords = coords nd
+  let (x, y) = coords nd
       coordsToCheck =
-        [ ndCoords {x = 1 + x ndCoords},
-          ndCoords {x = (-1) + x ndCoords},
-          ndCoords {y = 1 + y ndCoords},
-          ndCoords {y = (-1) + y ndCoords}
+        [ (x + 1, y),
+          (x - 1, y),
+          (x, y + 1),
+          (x, y - 1)
         ]
    in ( nd,
         mapMaybe
@@ -84,12 +83,12 @@ getNodes ::
   (Char -> Bool) ->
   (Char -> Bool) ->
   [String] ->
-  (Nodes, StartNode Coords, S.Set (EndNode Coords))
+  (Nodes, StartNode Coord, S.Set (EndNode Coord))
 getNodes startNodeSelector endNodeSelector input =
   let nodes =
-        [ (Coords i j, x)
+        [ ((i, j), char)
           | (j, row) <- zip [0 ..] input,
-            (i, x) <- zip [0 ..] row
+            (i, char) <- zip [0 ..] row
         ]
       startNode = fst . head . filter (startNodeSelector . snd) $ nodes
       endNodes = S.fromList . map fst . filter (endNodeSelector . snd) $ nodes
