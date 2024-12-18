@@ -3,7 +3,7 @@ module Day17Part2 where
 import Data.Char (digitToInt, intToDigit)
 import Data.Foldable (traverse_)
 import qualified Data.Map as M (Map, fromList, (!))
-import Utils.Dijkstra (EndNode, StartNode, dijkstra)
+import Utils.Dijkstra2 (DijkstraResult, EndNode, StartNode, dijkstra)
 
 type Coords = (Int, Int)
 
@@ -61,7 +61,7 @@ prettyPrintSymbolMap size mp =
 
 -- 1362
 -- takes about a minute to run !!!
-part2 :: IO (Maybe (EndNode Node, Int))
+part2 :: IO (DijkstraResult Node Int)
 part2 = do
   x <- getLines "./fixtures/input17.txt"
   let nodeMap = getSymbolCoords x
@@ -69,15 +69,15 @@ part2 = do
   let res = solve nodeMap gridSize
   return res
 
-solve :: NodeMap -> GridSize -> Maybe (EndNode Node, Int)
-solve nm gs = dijkstra scoreFn neighbourGetter isEndNode startNode
+solve :: NodeMap -> GridSize -> DijkstraResult Node Int
+solve nm gs = dijkstra neighbourGetter isEndNode startNode
   where
-    scoreFn :: Node -> Node -> Int
-    scoreFn _ = scoreFn' nm
-    neighbourGetter :: Node -> [Node]
-    neighbourGetter = getValidNeighbours gs
+    neighbourGetter :: Node -> [(Node, Int)]
+    neighbourGetter = map (\n -> (n, scoreFn' nm n)) . getValidNeighbours gs
+
     isEndNode :: Node -> Bool
     isEndNode = isEndNode' gs
+
     startNode :: StartNode Node
     startNode = Node (0, 0) R 0
 
