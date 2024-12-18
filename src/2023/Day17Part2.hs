@@ -11,11 +11,11 @@ type NodeMap = M.Map Coords Int
 
 data Direction = U | D | L | R deriving (Eq, Ord, Show)
 
-data Node = Node {coords :: Coords, dir :: Direction, prevSteps :: Int} deriving (Eq, Ord, Show)
+data Node = Node {_coords :: Coords, _dir :: Direction, _prevSteps :: Int} deriving (Eq, Ord, Show)
 
 data GridSize = GS
-  { maxX :: Int,
-    maxY :: Int
+  { _maxX :: Int,
+    _maxY :: Int
   }
   deriving (Show)
 
@@ -28,7 +28,7 @@ getGridSize inp = GS ((length . head $ inp) - 1) (length inp - 1)
 -- only worth considering immediate neighbours actually
 getValidNeighbours :: GridSize -> Node -> [Node]
 getValidNeighbours gs n =
-  if coords n == (0, 0)
+  if _coords n == (0, 0)
     then filter (withinBounds gs) (neighboursOtherDirections (Node (0, 0) D 0) ++ neighboursOtherDirections (Node (0, 0) R 0))
     else filter (withinBounds gs) . getValidNeighbours' $ n
 
@@ -88,7 +88,7 @@ scoreFn' :: NodeMap -> Node -> Int
 scoreFn' nm n@(Node _ _ prevSteps) =
   if prevSteps == 4
     then scoreFnForTeleport nm n
-    else scoreFnForCoords nm (coords n)
+    else scoreFnForCoords nm (_coords n)
 
 scoreFnForCoords :: NodeMap -> Coords -> Int
 scoreFnForCoords nm cs = nm M.! cs

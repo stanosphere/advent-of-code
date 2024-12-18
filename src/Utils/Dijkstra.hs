@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-module Utils.Dijkstra (dijkstra, dijkstraVisitAll, StartNode, EndNode, DijkstraState (visited, unVisited)) where
+module Utils.Dijkstra (dijkstra, dijkstraVisitAll, StartNode, EndNode, DijkstraState (_visited, _unVisited)) where
 
 -- based on my day 12 2022 implementation and heavily refactored + improved
 -- assuming score is always an int but can probs generalise
@@ -19,9 +19,9 @@ type StartNode nodeId = nodeId
 type EndNode nodeId = nodeId
 
 data DijkstraState nodeId = DState
-  { visited :: FinalisedDistances nodeId,
-    unVisited :: TentativeDistances nodeId,
-    foundEndNode :: Maybe (nodeId, Int)
+  { _visited :: FinalisedDistances nodeId,
+    _unVisited :: TentativeDistances nodeId,
+    _foundEndNode :: Maybe (nodeId, Int)
   }
   deriving (Show)
 
@@ -41,7 +41,7 @@ dijkstra ::
   Maybe (EndNode nodeId, Int)
 dijkstra scoreFn neighbourGetter isEndNode startNode = res
   where
-    res = foundEndNode <=< find (isJust . foundEndNode) . iterate (dijkstraStep scoreFn neighbourGetter isEndNode) $ dInit
+    res = _foundEndNode <=< find (isJust . _foundEndNode) . iterate (dijkstraStep scoreFn neighbourGetter isEndNode) $ dInit
     dInit = DState M.empty (M.singleton startNode 0) Nothing
 
 -- version of dijkstra that visits all nodes
@@ -53,7 +53,7 @@ dijkstraVisitAll ::
   Maybe (DijkstraState nodeId)
 dijkstraVisitAll scoreFn neighbourGetter startNode = res
   where
-    res = find (M.null . unVisited) . iterate (dijkstraStep scoreFn neighbourGetter (const False)) $ dInit
+    res = find (M.null . _unVisited) . iterate (dijkstraStep scoreFn neighbourGetter (const False)) $ dInit
     dInit = DState M.empty (M.singleton startNode 0) Nothing
 
 dijkstraStep ::
