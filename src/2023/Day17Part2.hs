@@ -2,7 +2,7 @@ module Day17Part2 where
 
 import Data.Char (digitToInt, intToDigit)
 import Data.Foldable (traverse_)
-import Data.Map qualified as M (Map, fromList, (!))
+import qualified Data.Map as M (Map, fromList, (!))
 import Utils.Dijkstra (EndNode, StartNode, dijkstra)
 
 type Coords = (Int, Int)
