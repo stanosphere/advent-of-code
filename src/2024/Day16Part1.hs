@@ -36,11 +36,6 @@ solve coords startCoord endCoord =
         . map (\n -> (n, nodeToNeighbours coordSet $ n))
         . coordsToNodes
         $ coords
-    scoreMap =
-      M.fromList
-        . concatMap (\x -> map (\(y, score) -> ((x, y), score)) . nodeToNeighbours coordSet $ x)
-        . coordsToNodes
-        $ coords
 
 coordsToNodes :: [Coord] -> [Node]
 coordsToNodes = concatMap (\c -> map (Nd c) [N, E, S, W])

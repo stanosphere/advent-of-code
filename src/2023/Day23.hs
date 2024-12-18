@@ -1,7 +1,7 @@
 module Day23 where
 
 import Data.Foldable (find, traverse_)
-import Data.Map qualified as M
+import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
 
 type Coords = (Int, Int)
