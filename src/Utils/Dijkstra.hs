@@ -23,6 +23,7 @@ data DijkstraState nodeId = DState
     unVisited :: TentativeDistances nodeId,
     foundEndNode :: Maybe (nodeId, Int)
   }
+  deriving (Show)
 
 type TentativeDistances nodeId = M.Map nodeId Int
 
