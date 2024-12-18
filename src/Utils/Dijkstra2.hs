@@ -55,6 +55,9 @@ dijkstraRec neighbourGetter isEndNode (DState tentative queue)
     queue' = foldr (uncurry Q.insert) restOfQueue neighboursToUpdate
     tentative' = foldr (uncurry M.insert) tentative neighboursToUpdate
 
+-- could do the above in a single fold if we _really_ wanted to but it's prettier how it is
+-- state' = foldr (\(node, score) (DState m q) -> DState (M.insert node score m) (Q.insert node score q)) (DState tentative restOfQueue) neighboursToUpdate
+
 getNeighboursToUpdate ::
   (Ord node, Ord score, Num score) =>
   TentativeDistances node score ->
