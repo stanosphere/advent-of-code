@@ -1,8 +1,10 @@
+{-# LANGUAGE TupleSections #-}
+
 module Day18 where
 
 import qualified Data.Map as M
 import qualified Data.Set as S
-import qualified Text.Parsec as P
+import Text.Parsec as P (char, digit, many1, newline, sepBy)
 import Text.ParserCombinators.Parsec (Parser, parse)
 import Utils.Dijkstra (DijkstraResult (FoundEndNode, QueueEmptied), dijkstra)
 
@@ -34,6 +36,7 @@ part2 = do
 
 data BinSearchBounds = BSB {_lo :: Int, _hi :: Int, _loResult :: Result, _hiResult :: Result}
 
+-- probably worth generalising and popping into a module if you use anything similar two more times
 binSearch :: BinSearchBounds -> (Int -> Result) -> Int
 binSearch (BSB lo hi loResult hiResult) f =
   if hi - lo == 1
@@ -57,7 +60,7 @@ solve :: GridSize -> Grid -> Result
 solve (GS width height) grid = dijkstra neighbourGetter isEndNode startNode
   where
     neighbourGetter :: Coord -> [(Coord, Int)]
-    neighbourGetter = map (\x -> (x, 1)) . (neighbourMap M.!)
+    neighbourGetter = map (,1) . (neighbourMap M.!)
 
     isEndNode :: Coord -> Bool
     isEndNode coord = coord == (width - 1, height - 1)
@@ -95,13 +98,7 @@ unsafeParse p s = case parse p "" s of
   Right res -> res
 
 inputParser :: Parser [Coord]
-inputParser = lineParser `P.sepBy` P.newline
+inputParser = lineParser `sepBy` newline
   where
-    lineParser :: Parser Coord
-    lineParser = do
-      x <- intParser
-      _ <- P.char ','
-      y <- intParser
-      return (x, y)
-    intParser :: Parser Int
-    intParser = read <$> P.many1 P.digit
+    lineParser = (,) <$> intParser <* char ',' <*> intParser
+    intParser = read <$> many1 digit

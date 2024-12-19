@@ -2,7 +2,7 @@ module Day8 where
 
 import Data.Char (digitToInt)
 import Data.List (transpose)
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
     alter,
     elems,

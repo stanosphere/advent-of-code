@@ -2,9 +2,9 @@ module Day8 where
 
 import Data.Foldable (find)
 import Data.List ((\\))
-import Data.Map qualified as M
+import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
-import Data.Set qualified as S
+import qualified Data.Set as S
 
 type Display = S.Set Char
 

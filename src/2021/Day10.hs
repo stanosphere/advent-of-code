@@ -5,16 +5,12 @@ module Day10 where
 import Control.Applicative (ZipList (ZipList, getZipList))
 import Data.Foldable (find)
 import Data.List
-  ( elemIndex,
-    elemIndices,
-    findIndex,
-    groupBy,
+  ( findIndex,
     sort,
-    sortOn,
     tails,
     (\\),
   )
-import Data.Map qualified as M
+import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
 import System.IO ()
 

@@ -1,6 +1,9 @@
 module Day16Part2 where
 
 import Data.List (nub)
+-- TODO modify the new dijkstra stuff so that it'll work for this
+
+import Data.List.Extra (minimumOn)
 import qualified Data.Map as M
 import Data.Maybe (fromJust)
 import qualified Data.Set as S
@@ -13,25 +16,35 @@ type Coord = (Int, Int)
 
 data Node = Nd {_position :: Coord, _orientation :: Direction} deriving (Eq, Show, Ord)
 
-bestPathScore = 102488
-
 -- using this approach for part 2 https://www.reddit.com/r/adventofcode/comments/1hfboft/comment/m2bae5n/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
 part2 :: IO ()
 part2 = do
   (coords, start, end) <- parseInput . lines <$> readFile "./fixtures/input16.txt"
   let startNode = Nd start E
-  let res = _visited . fromJust . solve coords $ startNode
-  let res1 = _visited . fromJust . solve coords $ Nd end N
-  let res2 = _visited . fromJust . solve coords $ Nd end E
-  let res3 = _visited . fromJust . solve coords $ Nd end S
-  let res4 = _visited . fromJust . solve coords $ Nd end W
+
+  let solve' = _visited . fromJust . solve coords
+
+  let res = solve' startNode
+
+  let bestPathScore = minimum . map (\dir -> res M.! Nd end dir) $ [N, E, S, W]
+
+  let direction = _orientation . fst . minimumOn snd . filter (\(Nd c _, _) -> c == end) . M.toList $ res
 
   let allNodes = coordsToNodes coords
 
-  let res1' = filter (\(Nd pos dir) -> bestPathScore == (res M.! Nd pos dir + res1 M.! Nd pos (flip dir))) allNodes
-  let res2' = filter (\(Nd pos dir) -> bestPathScore == (res M.! Nd pos dir + res2 M.! Nd pos (flip dir))) allNodes
-  let res3' = filter (\(Nd pos dir) -> bestPathScore == (res M.! Nd pos dir + res3 M.! Nd pos (flip dir))) allNodes
-  let res4' = filter (\(Nd pos dir) -> bestPathScore == (res M.! Nd pos dir + res4 M.! Nd pos (flip dir))) allNodes
+  let solve'' resEnd = filter (\(Nd pos dir) -> bestPathScore == (res M.! Nd pos dir + resEnd M.! Nd pos (flip dir))) allNodes
+
+  let res1' = solve'' . solve' $ Nd end N
+  let res2' = solve'' . solve' $ Nd end E
+  let res3' = solve'' . solve' $ Nd end S
+  let res4' = solve'' . solve' $ Nd end W
+
+  print (flip direction)
+
+  print (length res1')
+  print (length res2')
+  print (length res3')
+  print (length res4')
 
   print . length . nub . map _position $ (res1' ++ res2' ++ res3' ++ res4')
 

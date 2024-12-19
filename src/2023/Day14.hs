@@ -2,7 +2,7 @@ module Day14 where
 
 import Data.Foldable (traverse_)
 import Data.List (groupBy, sort, transpose)
-import Data.Map qualified as M (elems)
+import qualified Data.Map as M (elems)
 import Utils.Grouping (groupMap)
 
 -- 0.03 secs

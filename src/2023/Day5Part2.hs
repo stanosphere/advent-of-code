@@ -2,7 +2,7 @@ module Day5Part2 where
 
 import Data.Foldable (find, traverse_)
 import Data.List.Split (chunksOf)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 data RangeMap = RangeMap {offset :: Int, sourceInterval :: Interval} deriving (Show)

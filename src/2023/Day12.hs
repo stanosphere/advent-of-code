@@ -1,7 +1,7 @@
 module Day12 where
 
 import Data.List (group)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 -- so according to my calculations this should be doable vai brute force

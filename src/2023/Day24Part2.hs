@@ -55,7 +55,7 @@ module Day24Part2 where
 -- I absolutely love this sort o thing!
 
 import Data.Ratio (Ratio, denominator, numerator, (%))
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 import Utils.Linear (solve)
 

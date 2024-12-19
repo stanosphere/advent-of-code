@@ -9,7 +9,7 @@ import Control.Monad (join)
 import Data.Foldable (find)
 import Data.List.Split (chunksOf)
 import Data.Maybe (fromMaybe, isJust)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 data Mapping = Mapping {from :: String, to :: String, mapping :: Int -> Int} deriving (Show)
@@ -41,7 +41,6 @@ get Nothing = undefined
 get (Just x) = x
 
 instance Show (Int -> Int) where
-  show :: (Int -> Int) -> String
   show _ = "Int -> Int"
 
 inputParser' :: Parser Input

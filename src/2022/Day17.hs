@@ -5,10 +5,10 @@ import Data.List
   ( foldl1,
     groupBy,
   )
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
   )
-import Data.Set qualified as S
+import qualified Data.Set as S
   ( Set,
     empty,
     fromList,
@@ -52,7 +52,6 @@ data SystemState = SS
 --     ]
 
 instance Show SystemState where
-  show :: SystemState -> String
   show (SS occupiedPoints shape rocksFallen highestPoint jets rocks) =
     foldl1
       (\a b -> a ++ "\n" ++ b)
@@ -194,5 +193,5 @@ realInput = fmap head . getLines $ "./fixtures/input17.txt"
 getLines :: FilePath -> IO [String]
 getLines filePath = fmap lines (readFile filePath)
 
-groupOn :: Eq k => (a -> k) -> [a] -> [[a]]
+groupOn :: (Eq k) => (a -> k) -> [a] -> [[a]]
 groupOn f = groupBy (\x y -> f x == f y)

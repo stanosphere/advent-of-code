@@ -17,7 +17,7 @@ import Control.Monad.State.Strict (State, evalState, gets, modify)
 import Data.Foldable (traverse_)
 import Data.List.Extra (intercalate, (!?))
 import Data.Map.Strict as Map (Map, empty, insert, lookup)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 -- 7857

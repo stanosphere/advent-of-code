@@ -3,7 +3,7 @@
 module Day7 where
 
 import Data.List (sort, sortOn)
-import Data.Map qualified as M (Map, alter, empty, toList)
+import qualified Data.Map as M (Map, alter, empty, toList)
 import Data.Ord (Down (Down))
 
 data Bid = Bid {hand :: Hand, cards :: [Card], money :: Int} deriving (Show, Eq)
@@ -43,14 +43,13 @@ parseHand = parseHand' . frequencies . map parseCard
     parseHand' [(_, 2), (_, 2), (_, 1)] = TwoPair
     parseHand' ((_, 2) : _) = OnePair
     parseHand' _ = HighCard
-    frequencies :: Ord a => [a] -> [(a, Int)]
+    frequencies :: (Ord a) => [a] -> [(a, Int)]
     frequencies = sortOn (Down . snd) . M.toList . foldr (alter' (maybe 1 (+ 1))) M.empty
     -- like alter but can't delete elements
-    alter' :: Ord k => (Maybe a -> a) -> k -> M.Map k a -> M.Map k a
+    alter' :: (Ord k) => (Maybe a -> a) -> k -> M.Map k a -> M.Map k a
     alter' f = M.alter (Just . f)
 
 instance Ord Bid where
-  compare :: Bid -> Bid -> Ordering
   compare left right
     | leftHand < rightHand = LT
     | leftHand > rightHand = GT

@@ -1,7 +1,7 @@
 module Day14 where
 
 import Data.Foldable (traverse_)
-import qualified Text.Parsec as P
+import Text.Parsec as P (char, digit, many1, newline, sepBy, string, (<|>))
 import Text.ParserCombinators.Parsec (Parser, parse)
 import Utils.Grouping (windows)
 
@@ -54,20 +54,10 @@ unsafeParse p s = case parse p "" s of
   Right res -> res
 
 inputParser :: Parser [Robot]
-inputParser = P.sepBy robotParser P.newline
+inputParser = robotParser `sepBy` newline
   where
     -- p=0,4 v=3,-3
-    robotParser :: Parser Robot
-    robotParser = do
-      _ <- P.string "p="
-      x <- intParser
-      _ <- P.char ','
-      y <- intParser
-      _ <- P.string " v="
-      vx <- intParser
-      _ <- P.char ','
-      vy <- intParser
-      return (Robot (x, y) (vx, vy))
-
-    intParser :: Parser Int
-    intParser = read <$> P.many1 (P.digit P.<|> P.char '-')
+    robotParser = Robot <$> positionParser <*> velocityParser
+    positionParser = (,) <$> (string "p=" *> intParser) <*> (char ',' *> intParser)
+    velocityParser = (,) <$> (string " v=" *> intParser) <*> (char ',' *> intParser)
+    intParser = read <$> many1 (digit <|> char '-')

@@ -7,9 +7,9 @@
 module Day19Part2 where
 
 import Data.List.Extra (splitOn)
-import Data.Map qualified as M (Map, adjust, elems, fromList, (!))
+import qualified Data.Map as M (Map, adjust, elems, fromList, (!))
 import Data.Maybe (maybeToList)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 
 data Interval = Interval {start :: Int, end :: Int} deriving (Show)

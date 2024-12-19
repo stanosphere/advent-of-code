@@ -1,9 +1,9 @@
 module Day8 where
 
 import Data.Foldable (find)
-import Data.Map qualified as M (Map, fromList, keys, (!))
+import qualified Data.Map as M (Map, fromList, keys, (!))
 import Data.Maybe (mapMaybe)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 -- 0.04 secs
@@ -11,7 +11,7 @@ import Text.ParserCombinators.Parsec (Parser, parse)
 solvePart1 :: IO (Maybe Integer)
 solvePart1 = do
   xs <- getLines "./fixtures/input8.txt"
-  let infiniteSeq = concat . repeat . head $ xs
+  let infiniteSeq = cycle . head $ xs
   let nodes = M.fromList . map (unsafeParse branchParser) . drop 2 $ xs
   return . fmap fst . find ((== "ZZZ") . snd) . zip [0 ..] . go "AAA" nodes $ infiniteSeq
 
@@ -27,7 +27,7 @@ solvePart1 = do
 solvePart2 :: IO Integer
 solvePart2 = do
   xs <- getLines "./fixtures/input8.txt"
-  let infiniteSeq = concat . repeat . head $ xs
+  let infiniteSeq = cycle . head $ xs
   let nodes = M.fromList . map (unsafeParse branchParser) . drop 2 $ xs
   return
     . foldl1 lcm

@@ -8,9 +8,9 @@ module Day19 where
 
 import Data.Foldable ()
 import Data.List.Extra (splitOn)
-import Data.Map qualified as M (Map, elems, fromList, (!))
+import qualified Data.Map as M (Map, elems, fromList, (!))
 import Data.Maybe (mapMaybe)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 
 type Part = M.Map Char Int

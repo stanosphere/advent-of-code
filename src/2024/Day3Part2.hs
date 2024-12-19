@@ -2,7 +2,7 @@ module Day3Part2 where
 
 import Data.Functor (($>))
 import Data.Maybe (catMaybes)
-import qualified Text.Parsec as P
+import Text.Parsec as P (Parsec, anyToken, char, digit, getState, many, many1, putState, runParser, string, (<|>))
 import Text.ParserCombinators.Parsec (try)
 
 type Mult = (Int, Int)
@@ -11,7 +11,7 @@ data ShouldParse = Do | Don't
 
 -- my first ever stateful parser!
 -- state is just whether or not we should parse the mults
-type StatefulParser a = P.Parsec String ShouldParse a
+type StatefulParser a = Parsec String ShouldParse a
 
 part2 :: IO Int
 part2 = processInput <$> getInput
@@ -23,17 +23,17 @@ processInput = sum . map (uncurry (*)) . catMaybes . unsafeParse Do inputParser
 
 inputParser :: StatefulParser [Maybe Mult]
 inputParser =
-  P.many
+  many
     ( try multParser
-        P.<|> try doParser
-        P.<|> try dontParser
-        P.<|> (P.anyToken $> Nothing)
+        <|> try doParser
+        <|> try dontParser
+        <|> (anyToken $> Nothing)
     )
 
 multParser :: StatefulParser (Maybe Mult)
 multParser = do
   mult <- multParser'
-  shouldParse <- P.getState
+  shouldParse <- getState
   return
     ( case shouldParse of
         Do -> Just mult
@@ -42,24 +42,20 @@ multParser = do
   where
     -- same as the one from part 1
     multParser' :: StatefulParser Mult
-    multParser' = do
-      _ <- P.string "mul("
-      x <- P.many1 P.digit
-      _ <- P.char ','
-      y <- P.many1 P.digit
-      _ <- P.char ')'
-      return (read x, read y)
+    multParser' = (,) <$> (string "mul(" *> intParser) <* char ',' <*> (intParser <* char ')')
+
+    intParser = read <$> many1 digit
 
 -- always returns Nothing which makes me feel like there's a better way to model this
 doParser :: StatefulParser (Maybe Mult)
-doParser = P.string "do()" *> P.putState Do $> Nothing
+doParser = string "do()" *> putState Do $> Nothing
 
 -- always returns Nothing which makes me feel like there's a better way to model this
 dontParser :: StatefulParser (Maybe Mult)
-dontParser = P.string "don't()" *> P.putState Don't $> Nothing
+dontParser = string "don't()" *> putState Don't $> Nothing
 
 unsafeParse :: ShouldParse -> StatefulParser a -> String -> a
-unsafeParse initState p s = case P.runParser p initState "" s of
+unsafeParse initState p s = case runParser p initState "" s of
   Left res -> error . show $ res
   Right res -> res
 

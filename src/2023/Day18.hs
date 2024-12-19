@@ -1,7 +1,7 @@
 module Day18 where
 
 import Numeric (readHex)
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 import Utils.Grouping (pairs)
 

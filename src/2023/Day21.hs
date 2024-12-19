@@ -8,8 +8,8 @@ module Day21 where
 -- so this feels quite reasonable to compute
 
 import Data.Foldable
-import Data.Map qualified as M
-import Data.Set qualified as S
+import qualified Data.Map as M
+import qualified Data.Set as S
 
 type Coords = (Int, Int)
 

@@ -2,7 +2,7 @@ module Day7 where
 
 import Data.Foldable (traverse_)
 import Data.List (inits)
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
     alter,
     elems,

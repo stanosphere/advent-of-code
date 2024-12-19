@@ -1,7 +1,7 @@
 module Day10 where
 
 import Data.Foldable (find, traverse_)
-import Data.Map qualified as M (Map, findWithDefault, fromList, lookup, notMember, toList, (!))
+import qualified Data.Map as M (Map, findWithDefault, fromList, lookup, notMember, toList, (!))
 import Data.Maybe (mapMaybe)
 
 type SymbolMap = M.Map Coords Char

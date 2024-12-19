@@ -1,10 +1,9 @@
-{-# HLINT ignore "Use <$>" #-}
 module Day4 where
 
 import Data.Foldable (find)
-import Data.Map qualified as M (Map, delete, elems, empty, filter, fromList, insert, keys, map, null, size, toList, (!))
-import Data.Set qualified as S (Set, fromList, intersection, size)
-import Text.Parsec qualified as P
+import qualified Data.Map as M (Map, delete, elems, empty, filter, fromList, insert, keys, map, null, size, (!))
+import qualified Data.Set as S (Set, fromList, intersection, size)
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 data Card = Card {cardId :: Int, winningNumbers :: S.Set Int, myNumbers :: S.Set Int} deriving (Show)
@@ -74,10 +73,10 @@ type TaskMap a = M.Map a [a]
 
 data State a = State {taskMap :: TaskMap a, stepOrder :: [a]} deriving (Show)
 
-workOutOrderOfRollUp :: Ord a => TaskMap a -> [a]
+workOutOrderOfRollUp :: (Ord a) => TaskMap a -> [a]
 workOutOrderOfRollUp tm = unsafeGet . fmap (reverse . stepOrder) . find (M.null . taskMap) . iterate step $ State tm []
   where
-    step :: Ord a => State a -> State a
+    step :: (Ord a) => State a -> State a
     step (State taskMap stepOrder) = State taskMap' stepOrder'
       where
         nextTaskToDo = minimum . M.keys . M.filter null $ taskMap

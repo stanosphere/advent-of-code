@@ -1,8 +1,8 @@
 module Day16 where
 
 import Data.Foldable (find, traverse_)
-import Data.Map qualified as M (Map, fromList, lookup, (!))
-import Data.Set qualified as S (Set, difference, empty, filter, fromList, map, member, singleton, size, union, unions)
+import qualified Data.Map as M (Map, fromList, lookup, (!))
+import qualified Data.Set as S (Set, difference, empty, filter, fromList, map, member, singleton, size, union, unions)
 
 type SymbolMap = M.Map Coords Char
 
@@ -135,7 +135,7 @@ prettyPrintLasers size set =
   let counter = [0 .. size - 1]
    in traverse_ putStrLn [[if S.member (x, y) set then '#' else '.' | x <- counter] | y <- counter]
 
-flatMap :: Ord a => (a -> S.Set a) -> S.Set a -> S.Set a
+flatMap :: (Ord a) => (a -> S.Set a) -> S.Set a -> S.Set a
 flatMap f = S.unions . S.map f
 
 -- naughty naughty I know

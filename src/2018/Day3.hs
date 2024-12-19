@@ -1,10 +1,9 @@
-{-# LANGUAGE ImportQualifiedPost #-}
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
 module Day3 where
 
 import Data.Foldable (find)
-import Data.Map qualified as M
+import qualified Data.Map as M
   ( Map,
     elems,
     empty,
@@ -13,13 +12,13 @@ import Data.Map qualified as M
     toList,
     unionWith,
   )
-import Data.Set qualified as S
+import qualified Data.Set as S
   ( Set,
     singleton,
     size,
     union,
   )
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 data Coords = Coords {x :: Int, y :: Int} deriving (Eq, Ord, Show)

@@ -12,7 +12,7 @@ import Data.List
     transpose,
   )
 import Data.List.Split (splitOn)
-import Data.Map qualified as M
+import qualified Data.Map as M
 
 type From = Int
 

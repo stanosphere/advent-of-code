@@ -2,7 +2,7 @@ module Day3Part1 where
 
 import Data.Functor (($>))
 import Data.Maybe (catMaybes)
-import qualified Text.Parsec as P
+import Text.Parsec as P (anyToken, char, digit, many, many1, string, (<|>))
 import Text.ParserCombinators.Parsec (Parser, parse, try)
 
 type Mult = (Int, Int)
@@ -14,19 +14,13 @@ processInput :: String -> Int
 processInput = sum . map (uncurry (*)) . catMaybes . unsafeParse inputParser
 
 inputParser :: Parser [Maybe Mult]
-inputParser = P.many (Just <$> try multParser P.<|> (P.anyToken $> Nothing))
-
-multParser :: Parser Mult
-multParser = do
-  _ <- P.string "mul("
-  x <- P.many1 P.digit
-  _ <- P.char ','
-  y <- P.many1 P.digit
-  _ <- P.char ')'
-  return (read x, read y)
+inputParser = many (Just <$> try multParser <|> (anyToken $> Nothing))
+  where
+    multParser = (,) <$> (string "mul(" *> intParser) <* char ',' <*> (intParser <* char ')')
+    intParser = read <$> many1 digit
 
 unsafeParse :: Parser a -> String -> a
-unsafeParse p s = case parse p "this arg is the source name, I guess it's just for error messages or something?" s of
+unsafeParse p s = case parse p "" s of
   Left res -> error . show $ res
   Right res -> res
 

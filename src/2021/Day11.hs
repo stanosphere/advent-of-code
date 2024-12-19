@@ -2,7 +2,7 @@ module Day11 where
 
 import Data.Char (digitToInt)
 import Data.List (findIndex)
-import Data.Map qualified as M
+import qualified Data.Map as M
 
 type Coords = (Int, Int)
 
@@ -39,7 +39,7 @@ step' = resetFlashedOctopusesToZero . propegateFlashes . increaseAllByOne
 getTotalFlashesForThisStep :: Grid -> NumberOfFlashes
 getTotalFlashesForThisStep = count (\o -> flashState o `elem` [JustFlashed, AlreadyFlashed])
 
-count :: Ord k => (v -> Bool) -> M.Map k v -> Int
+count :: (Ord k) => (v -> Bool) -> M.Map k v -> Int
 count p = M.size . M.filter p
 
 resetFlashedOctopusesToZero :: Grid -> Grid

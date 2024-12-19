@@ -4,7 +4,7 @@ module Day24 where
 import Data.List (tails)
 import Data.Maybe (mapMaybe)
 import Data.Ratio (Ratio, denominator, numerator, (%))
-import Text.Parsec qualified as P
+import qualified Text.Parsec as P
 import Text.ParserCombinators.Parsec (Parser, parse, (<|>))
 
 data HailStone = HS

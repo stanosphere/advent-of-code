@@ -1,7 +1,7 @@
 module Day6 where
 
 import Data.Char (digitToInt)
-import Data.Map qualified as M
+import qualified Data.Map as M
 
 type DaysBeforeBreeding = Int
 
@@ -58,7 +58,7 @@ getInput filePath = fmap (map digitToInt . filter (/= ',') . head . lines) (read
 inputToSchool :: [Int] -> FishSchool
 inputToSchool = getFrequency
 
-getFrequency :: Ord a => [a] -> M.Map a Integer
+getFrequency :: (Ord a) => [a] -> M.Map a Integer
 getFrequency = foldr (\x -> M.insertWith (+) x 1) M.empty
 
 toyInput :: [Int]

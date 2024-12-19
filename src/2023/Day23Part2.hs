@@ -1,7 +1,7 @@
 module Day23Part2 where
 
-import Data.Map qualified as M
-import Data.Set qualified as S
+import qualified Data.Map as M
+import qualified Data.Set as S
 import Utils.Grouping (groupMap)
 
 type Coords = (Int, Int)
@@ -20,8 +20,8 @@ data Edge = Edge {from :: Coords, to :: Coords, score :: Int} deriving (Show)
 part2 :: IO Int
 part2 = do
   grid <- getGrid <$> getLines "./fixtures/input23.txt"
-  let startNode :: Coords = (1, 0)
-  let endNode :: Coords = (139, 140) -- real end is (139, 140); fake is (21, 22)
+  let startNode = (1, 0)
+  let endNode = (139, 140) -- real end is (139, 140); fake is (21, 22)
   let graph = buildGraph grid startNode endNode
   let res = solve graph startNode endNode
   return res

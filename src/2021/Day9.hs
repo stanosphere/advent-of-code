@@ -1,13 +1,11 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 module Day9 where
 
 import Data.Char (digitToInt)
 import Data.Foldable (find)
 import Data.List (sortOn)
-import Data.Map qualified as M
+import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
-import Data.Set qualified as S
+import qualified Data.Set as S
 import Utils.Grouping (groupBy')
 
 type Coords = (Int, Int)

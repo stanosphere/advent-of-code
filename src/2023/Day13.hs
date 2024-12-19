@@ -3,8 +3,8 @@ module Day13 where
 import Data.Foldable (Foldable (toList))
 import Data.List (transpose)
 import Data.List.Split (splitOn)
-import Data.Sequence qualified as S (Seq, adjust', fromList)
-import Data.Set qualified as ST (Set, difference, fromList, map, union)
+import qualified Data.Sequence as S (Seq, adjust', fromList)
+import qualified Data.Set as ST (Set, difference, fromList, map, union)
 
 type Pattern = [[Char]]
 
@@ -55,16 +55,16 @@ getAllReplacements ps = map ((map toList . toList) . (`applyUpdate` asSeq)) poin
     swapChar '.' = '#'
     swapChar _ = undefined
 
-findOriginalRefl :: Eq a => [[a]] -> Reflections
+findOriginalRefl :: (Eq a) => [[a]] -> Reflections
 findOriginalRefl xs = Reflections vertical horizontal
   where
     vertical = ST.fromList . getAllReflections . transpose $ xs
     horizontal = ST.fromList . getAllReflections $ xs
 
-getAllReflections :: Eq a => [a] -> [Int]
+getAllReflections :: (Eq a) => [a] -> [Int]
 getAllReflections = map fst . filter (uncurry areReflections . snd) . getAllSplits
   where
-    areReflections :: Eq a => [a] -> [a] -> Bool
+    areReflections :: (Eq a) => [a] -> [a] -> Bool
     areReflections left right = all (uncurry (==)) (zip (reverse left) right)
     getAllSplits :: [a] -> [(Int, ([a], [a]))]
     getAllSplits xs = map (\i -> (i, splitAt i xs)) [1 .. length xs - 1]

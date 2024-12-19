@@ -2,7 +2,7 @@ module Day13 where
 
 import Data.Bifunctor (bimap)
 import Data.Maybe (mapMaybe)
-import qualified Text.Parsec as P
+import Text.Parsec as P (digit, many1, newline, sepBy, string)
 import Text.ParserCombinators.Parsec (Parser, parse)
 
 -- so each input is a set of equations like
@@ -58,35 +58,20 @@ unsafeParse p s = case parse p "this arg is the source name, I guess it's just f
   Right res -> res
 
 inputParser :: Parser [(Equation, Equation)]
-inputParser = P.sepBy equationParser (P.newline *> P.newline)
+inputParser = sepBy equationParser (newline *> newline)
   where
     equationParser :: Parser (Equation, Equation)
     equationParser = do
-      (y1, y2) <- firstLineParser <* P.newline
-      (x1, x2) <- secondLineParser <* P.newline
+      (y1, y2) <- firstLineParser <* newline
+      (x1, x2) <- secondLineParser <* newline
       (z1, z2) <- thirdLineParser
       return (Eqn z1 y1 x1, Eqn z2 y2 x2)
 
     -- Button A: X+46, Y+68
-    firstLineParser :: Parser (Int, Int)
-    firstLineParser = do
-      y1 <- P.string "Button A: X+" *> intParser
-      y2 <- P.string ", Y+" *> intParser
-      return (y1, y2)
-
+    firstLineParser = (,) <$> (string "Button A: X+" *> intParser) <*> (string ", Y+" *> intParser)
     -- Button B: X+34, Y+14
-    secondLineParser :: Parser (Int, Int)
-    secondLineParser = do
-      x1 <- P.string "Button B: X+" *> intParser
-      x2 <- P.string ", Y+" *> intParser
-      return (x1, x2)
-
+    secondLineParser = (,) <$> (string "Button B: X+" *> intParser) <*> (string ", Y+" *> intParser)
     -- Prize: X=11306, Y=10856
-    thirdLineParser :: Parser (Int, Int)
-    thirdLineParser = do
-      z1 <- P.string "Prize: X=" *> intParser
-      z2 <- P.string ", Y=" *> intParser
-      return (z1, z2)
+    thirdLineParser = (,) <$> (string "Prize: X=" *> intParser) <*> (string ", Y=" *> intParser)
 
-    intParser :: Parser Int
-    intParser = read <$> P.many1 P.digit
+    intParser = read <$> many1 digit

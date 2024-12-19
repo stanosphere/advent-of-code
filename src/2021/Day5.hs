@@ -2,7 +2,7 @@ module Day5 where
 
 import Data.List (sort)
 import Data.List.Split (splitOn)
-import Data.Map qualified as M
+import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
 
 data Point = Point
