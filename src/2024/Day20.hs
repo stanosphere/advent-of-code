@@ -120,10 +120,25 @@ part2 = do
   (_, freeSpace, start, end) <- getInput
   let distanceMap = getAllDistances (S.fromList freeSpace) start end
   let noCheatDistance = distanceMap M.! end
+  let maxCheatDist = 20
 
   return
     . length
-    . concatMap (filter ((>= 100) . (noCheatDistance -)) . getShortCutDistances' noCheatDistance distanceMap)
+    . concatMap (filter ((>= 100) . (noCheatDistance -)) . getShortCutDistances' (maxCheatDist, noCheatDistance) distanceMap)
+    . M.keys
+    $ distanceMap
+
+part1' :: IO Int
+part1' = do
+  -- don't even need to know where the walls are for this lol
+  (_, freeSpace, start, end) <- getInput
+  let distanceMap = getAllDistances (S.fromList freeSpace) start end
+  let noCheatDistance = distanceMap M.! end
+  let maxCheatDist = 2
+
+  return
+    . length
+    . concatMap (filter ((>= 100) . (noCheatDistance -)) . getShortCutDistances' (maxCheatDist, noCheatDistance) distanceMap)
     . M.keys
     $ distanceMap
 
@@ -137,12 +152,12 @@ getShortCutDistance' nonCheatDistance distanceMap beforePosition (afterPosition,
     beforeDist = distanceMap M.! beforePosition
     afterDist = distanceMap M.! afterPosition
 
-getShortCutDistances' :: Int -> M.Map Coord Int -> Coord -> [Int]
-getShortCutDistances' nonCheatDistance distanceMap beforePosition =
+getShortCutDistances' :: (Int, Int) -> M.Map Coord Int -> Coord -> [Int]
+getShortCutDistances' (maxCheatDist, nonCheatDistance) distanceMap beforePosition =
   mapMaybe (getShortCutDistance' nonCheatDistance distanceMap beforePosition)
     . filter (\(coord, _) -> coord `M.member` distanceMap)
     . generateAllManhattanPoints beforePosition
-    $ 20
+    $ maxCheatDist
 
 generateAllManhattanPoints :: Coord -> Int -> [(Coord, Int)]
 generateAllManhattanPoints (x, y) d = concatMap (generateManhattanPoints (x, y)) [1 .. d]
