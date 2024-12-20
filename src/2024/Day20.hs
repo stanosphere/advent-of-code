@@ -16,12 +16,6 @@ data PathState = PS
     _seen :: S.Set Coord -- could use a Maybe actually since it only ever has one value lol
   }
 
-data CheatPathState = CPS
-  { _cheatCost :: Int,
-    _frontier :: [Coord],
-    _seenWalls :: M.Map Coord Int
-  }
-
 -- actually we don't need dijkstra at all...
 -- I think the maze might be just a simple path
 -- that is each tile, I think, will have exactly two neighbours (other than start and end)
@@ -70,11 +64,12 @@ getAllDistances freeSpaces start end =
         position' = head . filter (`S.notMember` seen) . nodeToNeighbours freeSpaces $ position
         seen' = S.singleton position
 
-nodeToNeighbours :: S.Set Coord -> Coord -> [Coord]
-nodeToNeighbours grid = filter (`S.member` grid) . nodeToNeighboursNoFilter
+-- from stack overflow
+takeWhileOneMore :: (a -> Bool) -> [a] -> [a]
+takeWhileOneMore p = foldr (\x ys -> if p x then x : ys else [x]) []
 
-nodeToNeighboursNoFilter :: Coord -> [Coord]
-nodeToNeighboursNoFilter (x, y) = [(x, y - 1), (x, y + 1), (x + 1, y), (x - 1, y)]
+nodeToNeighbours :: S.Set Coord -> Coord -> [Coord]
+nodeToNeighbours grid (x, y) = filter (`S.member` grid) [(x, y - 1), (x, y + 1), (x + 1, y), (x - 1, y)]
 
 findWallsThatCanBePassedThrough :: S.Set Coord -> [Coord] -> [(Coord, Direction)]
 findWallsThatCanBePassedThrough freeSpaces = concatMap toPassable
@@ -93,21 +88,6 @@ findWallsThatCanBePassedThrough freeSpaces = concatMap toPassable
 
 mapBoth :: (Bifunctor bf) => (a -> b) -> bf a a -> bf b b
 mapBoth f = bimap f f
-
--- from stack overflow
-takeWhileOneMore :: (a -> Bool) -> [a] -> [a]
-takeWhileOneMore p = foldr (\x ys -> if p x then x : ys else [x]) []
-
-getInput :: IO ([Coord], [Coord], Coord, Coord)
-getInput = parseInput . lines <$> readFile "./fixtures/input20.txt"
-
-parseInput :: [String] -> ([Coord], [Coord], Coord, Coord)
-parseInput xs = (walls, freeSpace, start, end)
-  where
-    grid = [((i, j), char) | (j, row) <- zip [0 ..] xs, (i, char) <- zip [0 ..] row]
-    (walls, freeSpace) = mapBoth (map fst) . partition ((== '#') . snd) $ grid
-    start = fst . head . filter ((== 'S') . snd) $ grid
-    end = fst . head . filter ((== 'E') . snd) $ grid
 
 -- ok so part 2 is basically the same except at every position on the path we have many cheat options
 -- I reckon for each place on the path I can work out the distinct positions I could walk to by cheating (going through walls)
@@ -176,3 +156,16 @@ generateManhattanPoints (x, y) d =
               ]
       )
     $ [1 .. d]
+
+-- parsing stuff below here
+
+getInput :: IO ([Coord], [Coord], Coord, Coord)
+getInput = parseInput . lines <$> readFile "./fixtures/input20.txt"
+
+parseInput :: [String] -> ([Coord], [Coord], Coord, Coord)
+parseInput xs = (walls, freeSpace, start, end)
+  where
+    grid = [((i, j), char) | (j, row) <- zip [0 ..] xs, (i, char) <- zip [0 ..] row]
+    (walls, freeSpace) = mapBoth (map fst) . partition ((== '#') . snd) $ grid
+    start = fst . head . filter ((== 'S') . snd) $ grid
+    end = fst . head . filter ((== 'E') . snd) $ grid
