@@ -28,6 +28,7 @@ dependencies:
   - array
   - mtl
   - psqueues
+  - MissingH
 
 ghc-options:
   - -Wall
