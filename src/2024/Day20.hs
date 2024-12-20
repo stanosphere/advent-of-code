@@ -1,13 +1,13 @@
 module Day20 where
 
 import Data.Bifunctor (Bifunctor (bimap))
-import Data.Foldable (find)
-import Data.List (partition)
+import Data.Foldable (find, traverse_)
+import Data.List (nub, partition)
 import qualified Data.Map as M
 import Data.Maybe (fromJust, mapMaybe)
 import qualified Data.Set as S
 import Debug.Trace (trace)
-import Utils.Grouping (groupMapReduce)
+import Utils.Grouping (frequencies, groupMapReduce)
 
 type Coord = (Int, Int)
 
@@ -118,51 +118,33 @@ parseInput xs = (walls, freeSpace, start, end)
 -- in terms of how to find these cheats I think we just need to iterate going out manhattan-style (in fact I think there will be code for this from last year)
 
 getCheats :: S.Set Coord -> Coord -> M.Map Coord Int
-getCheats wallPositions pathPosition = (res wallStarts)
+getCheats wallPositions wallStart =
+  _seenWalls
+    . fromJust
+    . find ((== 20) . _cheatCost)
+    . iterate evolve
+    $ CPS 2 [wallStart] (M.singleton wallStart 2)
   where
-    res starts =
-      _seenWalls
-        . fromJust
-        . find ((== 2) . _cheatCost)
-        . iterate evolve
-        $ CPS 2 starts (M.fromList . map (\x -> (x, 2)) $ starts)
-    wallStarts = nodeToNeighbours wallPositions pathPosition
-
     evolve :: CheatPathState -> CheatPathState
     evolve (CPS cheatCost front seen) = CPS cheatCost' front' seen'
       where
         cheatCost' = cheatCost + 1
-        front' = concatMap (filter (`M.notMember` seen) . nodeToNeighbours wallPositions) front
+        front' = concatMap (filter (`M.notMember` seen) . nodeToNeighboursNoFilter) front
         seen' = M.union seen (M.fromList . map (\x -> (x, cheatCost')) $ front')
 
-getShortCutDistances' :: Int -> M.Map Coord Int -> S.Set Coord -> Coord -> [Int]
-getShortCutDistances' nonCheatDistance distanceMap wallPositions pathPosition =
-  M.elems
-    . groupMapReduce fst snd min
-    . concatMap (getShortCutDistance' nonCheatDistance distanceMap pathPosition)
-    . M.toList
-    . getCheats wallPositions
-    $ pathPosition
-
-getShortCutDistance' :: Int -> M.Map Coord Int -> Coord -> (Coord, Int) -> [(Coord, Int)]
-getShortCutDistance' nonCheatDistance distanceMap pathPosition (finalWallPosition, cheatCost) = afters
+getShortCutDistance' :: Int -> M.Map Coord Int -> Coord -> (Coord, Int) -> Maybe (Coord, Int)
+getShortCutDistance' nonCheatDistance distanceMap beforePosition (afterPosition, cheatCost) = res
   where
-    beforeDist = distanceMap M.! pathPosition
-    afters =
-      mapMaybe
-        ( ( \(afterPosition, afterDist) ->
-              if afterDist > beforeDist
-                then Just (afterPosition, (nonCheatDistance - afterDist) + beforeDist + cheatCost)
-                else Nothing
-          )
-            . (\afterPosition -> (afterPosition, distanceMap M.! afterPosition))
-        )
-        . filter (`M.member` distanceMap)
-        . nodeToNeighboursNoFilter
-        $ finalWallPosition
+    beforeDist = distanceMap M.! beforePosition
+    afterDist = distanceMap M.! afterPosition
 
--- 255192 is too low
-part2 :: IO Int
+    -- not too sure about this inequality actually hmmm
+    res =
+      if afterDist > beforeDist
+        then Just (afterPosition, (nonCheatDistance - afterDist) + beforeDist + cheatCost)
+        else Nothing
+
+-- 279644 is too low
 part2 = do
   (walls, freeSpace, start, end) <- getInput
   let distanceMap = getAllDistances (S.fromList freeSpace) start end
@@ -171,6 +153,39 @@ part2 = do
 
   let pathPositions = M.keys distanceMap
 
-  let res = length . filter (\x -> (noCheatDistance - x) >= 100) . concatMap (getShortCutDistances' noCheatDistance distanceMap wallPositions) $ pathPositions
+  let res =
+        length
+          . M.filter (\x -> (noCheatDistance - x) >= 100)
+          . groupMapReduce fst snd min
+          . concatMap (getShortCutDistances' noCheatDistance distanceMap)
+          $ pathPositions
 
-  return res
+  print res
+
+-- CHEATS DONT JUST HAVE TO STAY IN WALLSSSSSSSSSSS
+
+-- getShortCutDistances' :: Int -> M.Map Coord Int -> S.Set Coord -> Coord -> [Int]
+getShortCutDistances' :: Int -> M.Map Coord Int -> Coord -> [((Coord, Coord), Int)]
+getShortCutDistances' nonCheatDistance distanceMap beforePosition = blah
+  where
+    possibleEndPoints = generateAllManhattanPoints beforePosition 20
+    actualEndpoints = filter (\(coord, _) -> coord `M.member` distanceMap) possibleEndPoints
+    blah = map (\(end, score) -> ((beforePosition, end), score)) . mapMaybe (getShortCutDistance' nonCheatDistance distanceMap beforePosition) $ actualEndpoints
+
+generateAllManhattanPoints :: Coord -> Int -> [(Coord, Int)]
+generateAllManhattanPoints (x, y) d = concatMap (generateManhattanPoints (x, y)) [1 .. d]
+
+-- https://stackoverflow.com/questions/75128474/how-to-generate-all-of-the-coordinates-that-are-within-a-manhattan-distance-r-of
+generateManhattanPoints :: Coord -> Int -> [(Coord, Int)]
+generateManhattanPoints (x, y) d =
+  map (\c -> (c, d))
+    . concatMap
+      ( \offset ->
+          let invOffset = d - offset
+           in [ (x + offset, y + invOffset),
+                (x + invOffset, y - offset),
+                (x - offset, y - invOffset),
+                (x - invOffset, y + offset)
+              ]
+      )
+    $ [1 .. d]
