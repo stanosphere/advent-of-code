@@ -117,60 +117,35 @@ parseInput xs = (walls, freeSpace, start, end)
 -- and then I can use the same subtraction logic but the cheat cost will not be fixed at 2, it'll vary
 -- in terms of how to find these cheats I think we just need to iterate going out manhattan-style (in fact I think there will be code for this from last year)
 
-getCheats :: S.Set Coord -> Coord -> M.Map Coord Int
-getCheats wallPositions wallStart =
-  _seenWalls
-    . fromJust
-    . find ((== 20) . _cheatCost)
-    . iterate evolve
-    $ CPS 2 [wallStart] (M.singleton wallStart 2)
-  where
-    evolve :: CheatPathState -> CheatPathState
-    evolve (CPS cheatCost front seen) = CPS cheatCost' front' seen'
-      where
-        cheatCost' = cheatCost + 1
-        front' = concatMap (filter (`M.notMember` seen) . nodeToNeighboursNoFilter) front
-        seen' = M.union seen (M.fromList . map (\x -> (x, cheatCost')) $ front')
+part2 :: IO Int
+part2 = do
+  -- don't even need to know where the walls are for this lol
+  (_, freeSpace, start, end) <- getInput
+  let distanceMap = getAllDistances (S.fromList freeSpace) start end
+  let noCheatDistance = distanceMap M.! end
 
-getShortCutDistance' :: Int -> M.Map Coord Int -> Coord -> (Coord, Int) -> Maybe (Coord, Int)
-getShortCutDistance' nonCheatDistance distanceMap beforePosition (afterPosition, cheatCost) = res
+  return
+    . length
+    . concatMap (filter ((>= 100) . (noCheatDistance -)) . getShortCutDistances' noCheatDistance distanceMap)
+    . M.keys
+    $ distanceMap
+
+getShortCutDistance' :: Int -> M.Map Coord Int -> Coord -> (Coord, Int) -> Maybe (Int)
+getShortCutDistance' nonCheatDistance distanceMap beforePosition (afterPosition, cheatCost) =
+  -- I wasn't too sure if this inequality was right but using it gives the right answer
+  if afterDist > beforeDist
+    then Just ((nonCheatDistance - afterDist) + beforeDist + cheatCost)
+    else Nothing
   where
     beforeDist = distanceMap M.! beforePosition
     afterDist = distanceMap M.! afterPosition
 
-    -- not too sure about this inequality actually hmmm
-    res =
-      if afterDist > beforeDist
-        then Just (afterPosition, (nonCheatDistance - afterDist) + beforeDist + cheatCost)
-        else Nothing
-
--- 279644 is too low
-part2 = do
-  (walls, freeSpace, start, end) <- getInput
-  let distanceMap = getAllDistances (S.fromList freeSpace) start end
-  let noCheatDistance = distanceMap M.! end
-  let wallPositions = S.fromList walls
-
-  let pathPositions = M.keys distanceMap
-
-  let res =
-        length
-          . M.filter (\x -> (noCheatDistance - x) >= 100)
-          . groupMapReduce fst snd min
-          . concatMap (getShortCutDistances' noCheatDistance distanceMap)
-          $ pathPositions
-
-  print res
-
--- CHEATS DONT JUST HAVE TO STAY IN WALLSSSSSSSSSSS
-
--- getShortCutDistances' :: Int -> M.Map Coord Int -> S.Set Coord -> Coord -> [Int]
-getShortCutDistances' :: Int -> M.Map Coord Int -> Coord -> [((Coord, Coord), Int)]
-getShortCutDistances' nonCheatDistance distanceMap beforePosition = blah
-  where
-    possibleEndPoints = generateAllManhattanPoints beforePosition 20
-    actualEndpoints = filter (\(coord, _) -> coord `M.member` distanceMap) possibleEndPoints
-    blah = map (\(end, score) -> ((beforePosition, end), score)) . mapMaybe (getShortCutDistance' nonCheatDistance distanceMap beforePosition) $ actualEndpoints
+getShortCutDistances' :: Int -> M.Map Coord Int -> Coord -> [Int]
+getShortCutDistances' nonCheatDistance distanceMap beforePosition =
+  mapMaybe (getShortCutDistance' nonCheatDistance distanceMap beforePosition)
+    . filter (\(coord, _) -> coord `M.member` distanceMap)
+    . generateAllManhattanPoints beforePosition
+    $ 20
 
 generateAllManhattanPoints :: Coord -> Int -> [(Coord, Int)]
 generateAllManhattanPoints (x, y) d = concatMap (generateManhattanPoints (x, y)) [1 .. d]
