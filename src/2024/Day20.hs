@@ -1,92 +1,92 @@
 module Day20 where
 
 import Data.Bifunctor (Bifunctor (bimap))
-import Data.Foldable (traverse_)
-import Data.List (partition, sortOn)
+import Data.List (partition)
 import qualified Data.Map as M
+import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
-import Utils.Dijkstra (DijkstraResult (FoundEndNode), dijkstra)
-import Utils.Grouping (frequencies)
 
 type Coord = (Int, Int)
 
 data Direction = U | D | L | R
 
-type Result = DijkstraResult Coord Int
+data PathState = PS
+  { _distance :: Int,
+    _position :: Coord,
+    _seen :: S.Set Coord -- could use a Maybe actually since it only ever has one value lol
+  }
 
--- think I'll just use my "standard" dijkstra
--- a modified version would be better though
--- even just not starting from scratch each time would be really helpful
--- which I don't think would be too difficult
--- but let's see how well standard dijkstra works first before trying anything too fancy
+-- actually we don't need dijkstra at all...
+-- I think the maze might be just a simple path
+-- that is each tile, I think, will have exactly two neighbours (other than start and end)
+-- so I can naively mark the distances on those tiles
+-- and then when we pass through a wall I can do some maths to work out how much time was saved, just a simple subtraction
+-- that should do it...
 
 part1 = do
   (walls, freeSpace, start, end) <- getInput
-  let noCheatShortestPath = solve freeSpace start end Nothing
-  let cheatSols =
-        sortOn (fst)
-          . M.toList
-          . frequencies
-          . map (getTimeSaved noCheatShortestPath)
-          . filter ((> 0) . getTimeSaved noCheatShortestPath)
-          . map (solve freeSpace start end . Just)
-          . findWallsThatCanBePassedThrough (S.fromList freeSpace)
-          $ walls
+  let distanceMap = getAllDistances (S.fromList freeSpace) start end
+  let noCheatDistance = distanceMap M.! end
+  return
+    . length
+    . filter (\x -> (noCheatDistance - x) >= 100)
+    . mapMaybe (getShortCutDistance noCheatDistance distanceMap)
+    . findWallsThatCanBePassedThrough (S.fromList freeSpace)
+    $ walls
 
-  print noCheatShortestPath
-  print "cheats"
-  traverse_ print cheatSols
-
-getTimeSaved :: Result -> Result -> Int
-getTimeSaved (FoundEndNode (_, t0)) (FoundEndNode (_, t1)) = t0 - t1
-getTimeSaved _ _ = error "unexpected result type!"
-
-solve :: [Coord] -> Coord -> Coord -> Maybe (Coord, Direction) -> Result
-solve coords start end cheatSpace = dijkstra neighbourGetter (== end) start
+getShortCutDistance :: Int -> M.Map Coord Int -> (Coord, Direction) -> Maybe Int
+getShortCutDistance nonCheatDistance distanceMap (wallPosition, direction) =
+  if afterDist > beforeDist
+    then Just ((nonCheatDistance - afterDist) + beforeDist + 2)
+    else Nothing
   where
-    neighbourGetter :: Coord -> [(Coord, Int)]
-    neighbourGetter n = neighbourMap M.! n
+    (before, after) = case (wallPosition, direction) of
+      ((x, y), U) -> ((x, y - 1), (x, y + 1))
+      ((x, y), D) -> ((x, y + 1), (x, y - 1))
+      ((x, y), L) -> ((x - 1, y), (x + 1, y))
+      ((x, y), R) -> ((x + 1, y), (x - 1, y))
+    beforeDist = distanceMap M.! before
+    afterDist = distanceMap M.! after
 
-    coordSet = S.fromList coords
-
-    neighbourMap =
-      addCheatToNeighbourMap
-        . M.fromList
-        . map (\n -> (n, map (\x -> (x, 1)) . nodeToNeighbours coordSet $ n))
-        $ coords
-
-    addCheatToNeighbourMap :: M.Map Coord [(Coord, Int)] -> M.Map Coord [(Coord, Int)]
-    addCheatToNeighbourMap nm = case cheatSpace of
-      Nothing -> nm
-      Just ((cx, cy), R) -> M.insert (cx, cy) [((cx + 1, cy), 1)] nm
-      Just ((cx, cy), L) -> M.insert (cx, cy) [((cx - 1, cy), 1)] nm
-      Just ((cx, cy), U) -> M.insert (cx, cy) [((cx, cy - 1), 1)] nm
-      Just ((cx, cy), D) -> M.insert (cx, cy) [((cx, cy + 1), 1)] nm
-
-    nodeToNeighbours :: S.Set Coord -> Coord -> [Coord]
-    nodeToNeighbours grid (x, y) = filter (`S.member` grid) [(x, y - 1), (x, y + 1), (x + 1, y), (x - 1, y)] ++ cheat
+getAllDistances :: S.Set Coord -> Coord -> Coord -> M.Map Coord Int
+getAllDistances freeSpaces start end =
+  M.fromList
+    . map (\(PS distance position _) -> (position, distance))
+    . takeWhileOneMore ((/= end) . _position)
+    . iterate updatePathState
+    $ PS 0 start S.empty
+  where
+    updatePathState :: PathState -> PathState
+    updatePathState (PS distance position seen) = PS distance' position' seen'
       where
-        cheat = case cheatSpace of
-          Nothing -> []
-          Just ((cx, cy), U) -> [(cx, cy) | (cx, cy + 1) == (x, y)]
-          Just ((cx, cy), D) -> [(cx, cy) | (cx, cy - 1) == (x, y)]
-          Just ((cx, cy), L) -> [(cx, cy) | (cx + 1, cy) == (x, y)]
-          Just ((cx, cy), R) -> [(cx, cy) | (cx - 1, cy) == (x, y)]
+        distance' = distance + 1
+        position' = head . filter (`S.notMember` seen) . nodeToNeighbours freeSpaces $ position
+        seen' = S.singleton position
+
+nodeToNeighbours :: S.Set Coord -> Coord -> [Coord]
+nodeToNeighbours grid (x, y) = filter (`S.member` grid) [(x, y - 1), (x, y + 1), (x + 1, y), (x - 1, y)]
 
 findWallsThatCanBePassedThrough :: S.Set Coord -> [Coord] -> [(Coord, Direction)]
-findWallsThatCanBePassedThrough freeSpaces = concatMap (toPassable freeSpaces)
-
-toPassable :: S.Set Coord -> Coord -> [(Coord, Direction)]
-toPassable freeSpaces wall = upDown ++ leftRight
+findWallsThatCanBePassedThrough freeSpaces = concatMap toPassable
   where
-    upDown = if isPassableUpDown wall then [(wall, U), (wall, D)] else []
-    leftRight = if isPassableLeftRight wall then [(wall, L), (wall, R)] else []
+    toPassable :: Coord -> [(Coord, Direction)]
+    toPassable wall = upDown ++ leftRight
+      where
+        upDown = if isPassableUpDown wall then [(wall, U), (wall, D)] else []
+        leftRight = if isPassableLeftRight wall then [(wall, L), (wall, R)] else []
 
-    isPassableUpDown :: Coord -> Bool
-    isPassableUpDown (x, y) = (x, y + 1) `S.member` freeSpaces && (x, y - 1) `S.member` freeSpaces
+        isPassableUpDown :: Coord -> Bool
+        isPassableUpDown (x, y) = (x, y + 1) `S.member` freeSpaces && (x, y - 1) `S.member` freeSpaces
 
-    isPassableLeftRight :: Coord -> Bool
-    isPassableLeftRight (x, y) = (x + 1, y) `S.member` freeSpaces && (x - 1, y) `S.member` freeSpaces
+        isPassableLeftRight :: Coord -> Bool
+        isPassableLeftRight (x, y) = (x + 1, y) `S.member` freeSpaces && (x - 1, y) `S.member` freeSpaces
+
+mapBoth :: (Bifunctor bf) => (a -> b) -> bf a a -> bf b b
+mapBoth f = bimap f f
+
+-- from stack overflow
+takeWhileOneMore :: (a -> Bool) -> [a] -> [a]
+takeWhileOneMore p = foldr (\x ys -> if p x then x : ys else [x]) []
 
 getInput :: IO ([Coord], [Coord], Coord, Coord)
 getInput = parseInput . lines <$> readFile "./fixtures/input20.txt"
@@ -98,6 +98,3 @@ parseInput xs = (walls, freeSpace, start, end)
     (walls, freeSpace) = mapBoth (map fst) . partition ((== '#') . snd) $ grid
     start = fst . head . filter ((== 'S') . snd) $ grid
     end = fst . head . filter ((== 'E') . snd) $ grid
-
-mapBoth :: (Bifunctor bf) => (a -> b) -> bf a a -> bf b b
-mapBoth f = bimap f f
