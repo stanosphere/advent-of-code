@@ -1,10 +1,13 @@
 module Day20 where
 
 import Data.Bifunctor (Bifunctor (bimap))
+import Data.Foldable (find)
 import Data.List (partition)
 import qualified Data.Map as M
-import Data.Maybe (mapMaybe)
+import Data.Maybe (fromJust, mapMaybe)
 import qualified Data.Set as S
+import Debug.Trace (trace)
+import Utils.Grouping (groupMapReduce)
 
 type Coord = (Int, Int)
 
@@ -16,6 +19,12 @@ data PathState = PS
     _seen :: S.Set Coord -- could use a Maybe actually since it only ever has one value lol
   }
 
+data CheatPathState = CPS
+  { _cheatCost :: Int,
+    _frontier :: [Coord],
+    _seenWalls :: M.Map Coord Int
+  }
+
 -- actually we don't need dijkstra at all...
 -- I think the maze might be just a simple path
 -- that is each tile, I think, will have exactly two neighbours (other than start and end)
@@ -23,6 +32,7 @@ data PathState = PS
 -- and then when we pass through a wall I can do some maths to work out how much time was saved, just a simple subtraction
 -- that should do it...
 
+part1 :: IO Int
 part1 = do
   (walls, freeSpace, start, end) <- getInput
   let distanceMap = getAllDistances (S.fromList freeSpace) start end
@@ -64,7 +74,10 @@ getAllDistances freeSpaces start end =
         seen' = S.singleton position
 
 nodeToNeighbours :: S.Set Coord -> Coord -> [Coord]
-nodeToNeighbours grid (x, y) = filter (`S.member` grid) [(x, y - 1), (x, y + 1), (x + 1, y), (x - 1, y)]
+nodeToNeighbours grid = filter (`S.member` grid) . nodeToNeighboursNoFilter
+
+nodeToNeighboursNoFilter :: Coord -> [Coord]
+nodeToNeighboursNoFilter (x, y) = [(x, y - 1), (x, y + 1), (x + 1, y), (x - 1, y)]
 
 findWallsThatCanBePassedThrough :: S.Set Coord -> [Coord] -> [(Coord, Direction)]
 findWallsThatCanBePassedThrough freeSpaces = concatMap toPassable
@@ -98,3 +111,66 @@ parseInput xs = (walls, freeSpace, start, end)
     (walls, freeSpace) = mapBoth (map fst) . partition ((== '#') . snd) $ grid
     start = fst . head . filter ((== 'S') . snd) $ grid
     end = fst . head . filter ((== 'E') . snd) $ grid
+
+-- ok so part 2 is basically the same except at every position on the path we have many cheat options
+-- I reckon for each place on the path I can work out the distinct positions I could walk to by cheating (going through walls)
+-- and then I can use the same subtraction logic but the cheat cost will not be fixed at 2, it'll vary
+-- in terms of how to find these cheats I think we just need to iterate going out manhattan-style (in fact I think there will be code for this from last year)
+
+getCheats :: S.Set Coord -> Coord -> M.Map Coord Int
+getCheats wallPositions pathPosition = (res wallStarts)
+  where
+    res starts =
+      _seenWalls
+        . fromJust
+        . find ((== 2) . _cheatCost)
+        . iterate evolve
+        $ CPS 2 starts (M.fromList . map (\x -> (x, 2)) $ starts)
+    wallStarts = nodeToNeighbours wallPositions pathPosition
+
+    evolve :: CheatPathState -> CheatPathState
+    evolve (CPS cheatCost front seen) = CPS cheatCost' front' seen'
+      where
+        cheatCost' = cheatCost + 1
+        front' = concatMap (filter (`M.notMember` seen) . nodeToNeighbours wallPositions) front
+        seen' = M.union seen (M.fromList . map (\x -> (x, cheatCost')) $ front')
+
+getShortCutDistances' :: Int -> M.Map Coord Int -> S.Set Coord -> Coord -> [Int]
+getShortCutDistances' nonCheatDistance distanceMap wallPositions pathPosition =
+  M.elems
+    . groupMapReduce fst snd min
+    . concatMap (getShortCutDistance' nonCheatDistance distanceMap pathPosition)
+    . M.toList
+    . getCheats wallPositions
+    $ pathPosition
+
+getShortCutDistance' :: Int -> M.Map Coord Int -> Coord -> (Coord, Int) -> [(Coord, Int)]
+getShortCutDistance' nonCheatDistance distanceMap pathPosition (finalWallPosition, cheatCost) = afters
+  where
+    beforeDist = distanceMap M.! pathPosition
+    afters =
+      mapMaybe
+        ( ( \(afterPosition, afterDist) ->
+              if afterDist > beforeDist
+                then Just (afterPosition, (nonCheatDistance - afterDist) + beforeDist + cheatCost)
+                else Nothing
+          )
+            . (\afterPosition -> (afterPosition, distanceMap M.! afterPosition))
+        )
+        . filter (`M.member` distanceMap)
+        . nodeToNeighboursNoFilter
+        $ finalWallPosition
+
+-- 255192 is too low
+part2 :: IO Int
+part2 = do
+  (walls, freeSpace, start, end) <- getInput
+  let distanceMap = getAllDistances (S.fromList freeSpace) start end
+  let noCheatDistance = distanceMap M.! end
+  let wallPositions = S.fromList walls
+
+  let pathPositions = M.keys distanceMap
+
+  let res = length . filter (\x -> (noCheatDistance - x) >= 100) . concatMap (getShortCutDistances' noCheatDistance distanceMap wallPositions) $ pathPositions
+
+  return res
