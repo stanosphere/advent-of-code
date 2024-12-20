@@ -1,13 +1,10 @@
 module Day20 where
 
 import Data.Bifunctor (Bifunctor (bimap))
-import Data.Foldable (find, traverse_)
-import Data.List (nub, partition)
+import Data.List (partition)
 import qualified Data.Map as M
-import Data.Maybe (fromJust, mapMaybe)
+import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
-import Debug.Trace (trace)
-import Utils.Grouping (frequencies, groupMapReduce)
 
 type Coord = (Int, Int)
 
