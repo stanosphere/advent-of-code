@@ -24,7 +24,7 @@ type TentativeDistances node score = M.Map node score
 data DijkstraResult node score
   = FoundEndNode (node, score)
   | QueueEmptied -- maybe AllNodesVisited would be a more accurate description
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 data DijkstraState node score = DState
   { _tentative :: TentativeDistances node score,
