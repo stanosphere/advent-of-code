@@ -12,6 +12,7 @@ type Coord = (Int, Int)
 
 type PathMap = M.Map (Char, Char) [String]
 
+part1 :: IO Int
 part1 = sum . map (\x -> shortestSequence x * numericPart x) <$> getInput
 
 getInput :: IO [String]
