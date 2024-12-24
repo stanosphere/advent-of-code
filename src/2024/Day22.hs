@@ -2,6 +2,15 @@ module Day22 where
 
 import Data.Bits (Bits (xor))
 
+part1 :: IO Int
+part1 = sum . map (nSteps 2000) <$> getInput
+
+getInput :: IO [Int]
+getInput = map read . lines <$> readFile "./fixtures/input22.txt"
+
+nSteps :: Int -> Int -> Int
+nSteps n x = iterate step x !! n
+
 step :: Int -> Int
 step = step3 . step2 . step1
   where
