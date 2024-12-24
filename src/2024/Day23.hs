@@ -40,7 +40,7 @@ bk2 nMap maximals r p x =
     . S.toList
     $ (p S.\\ largestNeighbourSet)
   where
-    maximals' = if p == S.empty && x == S.empty then maximals ++ [r] else maximals
+    maximals' = if S.null p && S.null x then maximals ++ [r] else maximals
     -- choose node with the most neighbours as the pivot to minimise recursive calls
     largestNeighbourSet = maximumOn S.size . map (nMap M.!) . S.toList $ S.union p x
 
