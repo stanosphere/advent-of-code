@@ -3,21 +3,40 @@ module Day7 where
 import Data.Bits (complement, shiftL, shiftR, (.&.), (.|.))
 import Data.Foldable (Foldable (foldl'))
 import qualified Data.Map as M
+import Data.Word (Word16)
 import Text.Parsec as P (choice, digit, letter, many1, newline, sepBy, string, try)
 import Text.ParserCombinators.Parsec (Parser, parse)
 
-type WireMap = M.Map String Int
+type WireMap = M.Map String Word16
 
 type GateMap = M.Map String Instruction
 
 data Instruction
-  = INPUT Int String
-  | AND String String String
+  = INPUT Word16 String
+  | -- AND can take literals too
+    AND String String String
   | OR String String String
-  | LSHIFT String Int String
-  | RSHIFT String Int String
+  | LSHIFT String Word16 String
+  | RSHIFT String Word16 String
   | NOT String String
   deriving (Show)
+
+part1 = do
+  input <- getInput
+  let res = mkGateMap input
+  let res' = resolve (map f input) res M.empty
+  return res'
+
+mkGateMap :: [Instruction] -> GateMap
+mkGateMap = M.fromList . map (\x -> (f x, x))
+
+f :: Instruction -> String
+f (INPUT _ x) = x
+f (AND _ _ x) = x
+f (OR _ _ x) = x
+f (LSHIFT _ _ x) = x
+f (RSHIFT _ _ x) = x
+f (NOT _ x) = x
 
 resolve :: [String] -> GateMap -> WireMap -> WireMap
 resolve wireNames gateMap wireMap =
@@ -31,8 +50,8 @@ resolve' wireName gateMap wireMap =
       (INPUT x _) -> M.insert wireName x wireMap
       (AND in1 in2 _) -> goBin in1 in2 (.&.)
       (OR in1 in2 _) -> goBin in1 in2 (.|.)
-      (LSHIFT in1 x _) -> goSing in1 (shiftL x)
-      (RSHIFT in1 x _) -> goSing in1 (shiftR x)
+      (LSHIFT in1 x _) -> goSing in1 (shiftL' x)
+      (RSHIFT in1 x _) -> goSing in1 (shiftR' x)
       (NOT in1 _) -> goSing in1 complement
   where
     resolveInput x = resolve' x gateMap wireMap
@@ -43,6 +62,12 @@ resolve' wireName gateMap wireMap =
 
     insertNewBin r x y op = M.insert wireName ((r M.! x) `op` (r M.! y)) r
     goBin x y = insertNewBin (resolveInputs x y) x y
+
+shiftL' :: Word16 -> Word16 -> Word16
+shiftL' x y = shiftL y (fromIntegral x)
+
+shiftR' :: Word16 -> Word16 -> Word16
+shiftR' x y = shiftR y (fromIntegral x)
 
 getInput :: IO [Instruction]
 getInput = unsafeParse inputParser <$> readFile "./fixtures/input7.txt"
@@ -101,7 +126,7 @@ instructionParser = P.choice . map try $ [wireInputParser, andParser, orParser, 
         <$> (string "NOT " *> wireName)
         <*> (string " -> " *> wireName)
 
-    intParser :: Parser Int
+    intParser :: Parser Word16
     intParser = read <$> many1 digit
 
     wireName :: Parser String
