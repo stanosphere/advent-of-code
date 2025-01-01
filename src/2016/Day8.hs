@@ -1,5 +1,6 @@
 module Day8 where
 
+import qualified Data.Map as M
 import Text.Parsec as P (char, choice, digit, many1, newline, parse, sepBy, string, try)
 import Text.ParserCombinators.Parsec (Parser)
 
@@ -8,6 +9,20 @@ data Command
   | RotateRow Int Int
   | RotateCol Int Int
   deriving (Show)
+
+data Pixel = On | Off
+
+type Coord = (Int, Int)
+
+type Screen = M.Map Coord Pixel
+
+initialScreen :: Screen
+initialScreen = M.fromList [((x, y), Off) | x <- [0 .. 49], y <- [0 .. 5]]
+
+execute :: Screen -> Command -> Screen
+execute s (Rect x y) = s
+execute s (RotateRow x y) = s
+execute s (RotateCol x y) = s
 
 getInput :: IO [Command]
 getInput = unsafeParse (lineParser `sepBy` newline) <$> readFile "./fixtures/input8.txt"
