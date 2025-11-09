@@ -1,26 +1,23 @@
 module Day1 where
 
 import Data.Char (digitToInt)
-import Utils.Grouping (pairs)
 
 part1 :: IO Int
 part1 = do
   input <- getInput "./fixtures/input1.txt"
-  return
-    . sum
-    . map (\(x, y) -> if x == y then x else 0)
-    . pairs
-    . take (1 + length input)
-    . cycle
-    $ input
+  let n = 1
+  return . solve n $ input
 
+part2 :: IO Int
 part2 = do
   input <- getInput "./fixtures/input1.txt"
-  return
-    . sum
-    . map (\(x, y) -> if x == y then x else 0)
-    . zipWithOffset ((`div` 2) . length $ input)
-    $ input
+  let n = (`div` 2) . length $ input
+  return . solve n $ input
+
+solve :: Int -> [Int] -> Int
+solve n = sum . map (uncurry keepIfMatch) . zipWithOffset n
+  where
+    keepIfMatch x y = if x == y then x else 0
 
 -- offsets a list by n, and zips with the original
 -- resulting list has the same length as the original
