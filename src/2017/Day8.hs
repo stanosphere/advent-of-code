@@ -31,6 +31,11 @@ type Register = M.Map String Int
 part1 :: IO Int
 part1 = foldr max 0 . foldl' applyCommand M.empty <$> getInput
 
+-- I love it so much when part 2 is a trivial generalisation of part 1
+-- It's more because Haskell is good with this sort of thing than me being good though
+part2 :: IO Int
+part2 = foldl' max 0 . map (foldr max 0) . scanl applyCommand M.empty <$> getInput
+
 applyCommand :: Register -> Command -> Register
 applyCommand reg command = if res then M.insertWith (+) (toModify command) valueToInsert reg else reg
   where
