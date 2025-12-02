@@ -1,7 +1,7 @@
 module Day2 where
 
-import Data.Foldable
-import Data.Maybe (catMaybes)
+import Data.Containers.ListUtils (nubOrd)
+import Data.Maybe (mapMaybe)
 import Text.Parsec as P (char, digit, many1, sepBy)
 import Text.ParserCombinators.Parsec (Parser, parse)
 
@@ -17,19 +17,64 @@ import Text.ParserCombinators.Parsec (Parser, parse)
 
 data Interval = Interval {_start :: String, _end :: String} deriving (Show)
 
-part1 = do
-  input <- getInput
-  let res = map reduceInterval input
-  let res' = map (fmap getCandidates . reduceInterval) input
-  let res'' = sum . concat . catMaybes $ res'
-  let zipped = zip3 input res res'
-  traverse_ print zipped
-  print res''
+part1 :: IO Int
+part1 =
+  sum
+    . concat
+    . mapMaybe (fmap getCandidates . reduceInterval)
+    <$> getInput
+
+part2 :: IO Int
+part2 =
+  sum
+    . nubOrd
+    . concat
+    . concatMap (\i -> map (getCandidatesForFactor i) . getFactors' $ i)
+    . concatMap splitInterval
+    <$> getInput
+
+-- ok so for part 2 we have to generalize the way we get the invalid ids
+-- first to simplify things I will split my interval into many intervals
+-- each sub interval shall have the same number of digits to simplify things
+-- (e.g. Interval 89 1234 -> [Interval 89 99, Interval 100 999, Interval 1000 1234])
+-- now for each interval I will find the factors (excluding the number itself)
+-- and then for each factor I can do what I did in part1 for each factor I find!
+
+getCandidatesForFactor :: Interval -> Int -> [Int]
+getCandidatesForFactor (Interval start end) factor =
+  filter (\c -> c >= startInt && c <= endInt)
+    . map repeatAsRequired
+    $ [getCandidate start .. getCandidate end]
+  where
+    repeatAsRequired :: Int -> Int
+    repeatAsRequired = read . concat . (replicate (length start `div` factor) . show)
+    getCandidate :: String -> Int
+    getCandidate = read . take factor
+    startInt = read start
+    endInt = read end
+
+-- e.g. Interval 89 1234 -> [Interval 89 99, Interval 100 999, Interval 1000 1234]
+splitInterval :: Interval -> [Interval]
+splitInterval (Interval start end) = zipWith Interval (start : mids) (map minusOne mids ++ [end])
+  where
+    startLen = length start
+    endLen = length end
+    mids = take (endLen - startLen) . iterate (\x -> x ++ ['0']) $ ('1' : replicate startLen '0')
+    minusOne :: String -> String
+    minusOne = show . (\x -> x - 1) . read
+
+-- this will give us the number lengths we need to try
+getFactors :: Int -> [Int]
+getFactors n = filter ((== 0) . (n `mod`)) [1 .. n - 1]
+
+getFactors' :: Interval -> [Int]
+getFactors' = getFactors . length . _end
 
 -- this is horrible in terms of going to strings and back and so forth
 getCandidates :: Interval -> [Int]
 getCandidates (Interval start end) = filter (\c -> c >= startInt && c <= endInt) . map repeatOnce $ [getCandidate start .. getCandidate end]
   where
+    -- TODO could use replicate???
     repeatOnce :: Int -> Int
     repeatOnce = read . (\c -> show c ++ show c)
     getCandidate :: String -> Int
