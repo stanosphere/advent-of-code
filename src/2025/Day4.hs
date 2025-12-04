@@ -12,7 +12,7 @@ type Coord = (Int, Int)
 
 type Grid = M.Map Coord Char
 
--- I'm fairly certain we don't need both _grid and _remaining
+-- TODO: I'm fairly certain we don't need both _grid and _remaining
 -- I think we only really need _remaining...
 data SolutionState = SolutionState
   { _remaining :: S.Set Coord,
