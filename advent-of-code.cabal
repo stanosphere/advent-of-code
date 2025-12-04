@@ -23,6 +23,7 @@ source-repository head
 
 library
   exposed-modules:
+      Utils.BenchMark
       Utils.Dijkstra
       Utils.DijkstraOld
       Utils.Grouping
@@ -40,10 +41,12 @@ library
     , array
     , base >=4.7 && <5
     , containers
+    , deepseq
     , extra
     , mtl
     , parsec
     , psqueues
     , split
+    , tasty-bench
     , transformers
   default-language: Haskell2010

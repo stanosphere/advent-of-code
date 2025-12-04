@@ -29,6 +29,8 @@ dependencies:
   - mtl
   - psqueues
   - MissingH
+  - tasty-bench
+  - deepseq
 
 ghc-options:
   - -Wall

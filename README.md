@@ -21,6 +21,8 @@ Happy Haskelling my future self!
 
 ## TODO
 
+- for benchmarking checkout the tasty library! 
+  - https://hackage.haskell.org/package/tasty-bench
 - Add a little script to just run any day
   - Should output time as well as answer
   - I guess it'd have to look for functions called `part1` and `part2` in files called `DayX` and `DayXPart2`?

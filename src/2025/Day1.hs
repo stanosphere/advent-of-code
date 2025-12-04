@@ -3,6 +3,7 @@ module Day1 where
 import Data.List (foldl', scanl')
 import Text.Parsec as P (char, digit, many1, newline, sepBy, (<|>))
 import Text.ParserCombinators.Parsec (Parser, parse)
+import Utils.BenchMark (runBenchMark)
 
 data Direction = L | R deriving (Show)
 
@@ -19,11 +20,15 @@ data SafeState = SafeState {_position :: Int, _timesCrossedZero :: Int} deriving
 -- -- for right rotations do some addition and see if we cross 100
 -- -- there is no doubt a way to do this with modular arithmetic too but I can't think of what it would be
 
-part1 :: IO Int
-part1 = findTimesWeHitZero <$> getInput
+part1 :: IO ()
+part1 = do
+  input <- getInput
+  runBenchMark findTimesWeHitZero input
 
-part2 :: IO Int
-part2 = findTimesWeCrossZero <$> getInput
+part2 :: IO ()
+part2 = do
+  input <- getInput
+  runBenchMark findTimesWeHitZero input
 
 findTimesWeCrossZero :: [Command] -> Int
 findTimesWeCrossZero = _timesCrossedZero . foldl' applyCommand' (SafeState 50 0)
