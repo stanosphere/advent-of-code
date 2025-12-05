@@ -8,8 +8,12 @@ part1 :: IO Int
 part1 = do
   (intervals, ids) <- getInput
   let mergedIntervals = mergeIntervals intervals
-  let res = length . filter (\id -> any (\(Interval lo hi) -> id >= lo && id <= hi) mergedIntervals) $ ids
-  return res
+  return . length . filter (\id -> any (\(Interval lo hi) -> id >= lo && id <= hi) mergedIntervals) $ ids
+
+part2 :: IO Int
+part2 = do
+  (intervals, _) <- getInput
+  return . sum . map (\(Interval lo hi) -> hi - lo + 1) . mergeIntervals $ intervals
 
 -- this is a standard algorithm for merging intervals
 -- from the example we have [3-5, 10-14, 16-20, 12-18] -> [3-5, 10-20]
