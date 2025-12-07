@@ -1,7 +1,6 @@
 module Day7 where
 
-import Control.Monad
-import Data.Foldable
+import Data.Foldable (Foldable (foldl'))
 import qualified Data.Set as S
 
 type BeamPositions = S.Set Int
