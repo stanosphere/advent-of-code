@@ -21,37 +21,23 @@ part2 = do
   return . M.foldr (+) 0 . foldl' step' initialPosition $ splitters
 
 step' :: BeamPositions' -> SplitterPositions -> BeamPositions'
-step' beams splitters = res
+step' beams spittersInRow = foldl' updateBeamPosition M.empty . M.keys $ beams
   where
-    -- right so we add up the stuff due to beams and due to splitters
-    -- so first find the positions of the splitters that we hit
-    -- then as we go through the map to get the new beam positions we make sure to check against the spitters hit list
-    -- need to make sure we do so on the left, and the right
+    splittersHit = S.intersection (M.keysSet beams) spittersInRow
 
-    splittersHit = S.intersection (M.keysSet beams) splitters
-
-    keys = M.keys beams
-
-    folder :: BeamPositions' -> Int -> BeamPositions'
-    folder acc c =
+    updateBeamPosition :: BeamPositions' -> Int -> BeamPositions'
+    updateBeamPosition acc c =
       M.insert
         c
-        ( ( if S.member c splittersHit
-              then 0
-              else beams M.! c
-          )
-            + ( if S.member (c - 1) splittersHit
-                  then beams M.! (c - 1)
-                  else 0
-              )
-            + ( if S.member (c + 1) splittersHit
-                  then beams M.! (c + 1)
-                  else 0
-              )
-        )
+        (contribFromBeam + contribFromSplitterL + contribFromSplitterR)
         acc
-
-    res = foldl' folder M.empty keys
+      where
+        isSplitterAbove = S.member c splittersHit
+        contribFromBeam = if isSplitterAbove then 0 else beams M.! c
+        -- if there's a splitter to the left we get its contribution
+        contribFromSplitterL = if S.member (c - 1) splittersHit then beams M.! (c - 1) else 0
+        -- if there's a splitter to the right we get its contribution
+        contribFromSplitterR = if S.member (c + 1) splittersHit then beams M.! (c + 1) else 0
 
 step :: (BeamPositions, Int) -> SplitterPositions -> (BeamPositions, Int)
 step (beams, hits) splitters = (newBeams, hits + S.size splittersHit)
