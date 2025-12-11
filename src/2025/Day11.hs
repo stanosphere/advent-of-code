@@ -1,6 +1,6 @@
 module Day11 where
 
-import Data.Foldable
+import Data.Foldable (Foldable (foldl'), find)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Text.Parsec as P (alphaNum, char, many1, newline, sepBy, string)
@@ -22,13 +22,47 @@ data State = State
   }
   deriving (Show)
 
+-- for part 2 I observe that what we are dealing with is a DAG
+-- thus the nodes we go via cannot form a loop
+-- so for all paths we care about we must go through one first, and then the other
+-- so they have a fixed order
+-- so if I can work out this fixed order then I can just run my `solve` function 3 times
+-- being careful to initialize it appropriately each time
+-- via experiment i think i need to go svr -> fft -> dac -> out
+
+part2 :: IO (Maybe Int)
+part2 = do
+  edges <- getInput
+  let reversedEdges = getReversedEdges edges
+
+  return (solvePart2 (edges, reversedEdges))
+
+-- need to go svr -> fft -> dac -> out
+solvePart2 :: (Edges, Edges) -> Maybe Int
+solvePart2 (edges, reverseEdges) =
+  Just 1
+    >>= solve' "svr" "fft"
+    >>= solve' "fft" "dac"
+    >>= solve' "dac" "out"
+  where
+    mkState node paths = State (S.fromList (edges M.! node)) (M.singleton node paths)
+    solve' start end paths = solve (edges, reverseEdges) (mkState start paths) end
+
 part1 :: IO (Maybe Int)
 part1 = do
   edges <- getInput
   let reversedEdges = getReversedEdges edges
-  let res = fmap ((M.! "out") . _resolved) . find (null . _unResolved) . iterate (step (edges, reversedEdges)) $ (State (S.fromList (edges M.! "you")) (M.singleton "you" 1))
+  let initialState = State (S.fromList (edges M.! "you")) (M.singleton "you" 1)
+  let res = solve (edges, reversedEdges) initialState "out"
 
   return res
+
+solve :: (Edges, Edges) -> State -> String -> Maybe Int
+solve dag state end =
+  fmap ((M.! end) . _resolved)
+    . find (null . _unResolved)
+    . iterate (step dag)
+    $ state
 
 getReversedEdges :: Edges -> Edges
 getReversedEdges = groupMap fst snd . concatMap (\(n, cs) -> map (\c -> (c, n)) cs) . M.toList
@@ -53,14 +87,6 @@ step (edges, reversedEdges) (State unResolved resolved) = State unResolved' reso
 
     getReverseEdges :: String -> [String]
     getReverseEdges node = M.findWithDefault [] node reversedEdges
-
--- this is a solution that I found on the internet that I don't understand
--- will put it in its own file...
-solve :: Ord a => M.Map a [a] -> a -> a -> Int
-solve stuff start end = res M.! start
-  where
-    res =
-      M.map (sum . map (\y -> if y == end then 1 else M.findWithDefault 0 y res)) stuff
 
 getInput :: IO (M.Map String [String])
 getInput =
