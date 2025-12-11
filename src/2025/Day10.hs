@@ -16,12 +16,16 @@ module Day10 where
 -- - - and once you set up the problem like this you can just do gaussian elimination or whatever
 -- - - the challenge is I don't yet really know how to handle the mod 2 stuff if that makes sense
 
-import Data.Foldable
+-- ok yeah part 2 really is linear algebra
+-- hopefully the solutions aren't degenerate or anything lol
+
+import Data.Foldable (Foldable (foldl'), find)
 import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import Text.Parsec as P (char, digit, many1, newline, sepBy, sepEndBy, (<|>))
 import Text.ParserCombinators.Parsec (Parser, parse)
+import Utils.BenchMark (runBenchMark)
 
 data LightState = On | Off deriving (Show, Eq)
 
@@ -38,8 +42,10 @@ data Line = Line
   }
   deriving (Show)
 
-part1 :: IO Int
-part1 = sum . mapMaybe solveLine <$> getInput
+part1 :: IO ()
+part1 = do
+  input <- getInput
+  runBenchMark (sum . mapMaybe solveLine) input
 
 solveLine :: Line -> Maybe Int
 solveLine (Line desiredLightState buttons _) = fmap length . find ((== desiredLightState) . applyButtons allLightsOff) $ buttonConfigs
