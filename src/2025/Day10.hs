@@ -20,10 +20,12 @@ module Day10 where
 -- hopefully the solutions aren't degenerate or anything lol
 
 import Data.Foldable (Foldable (foldl'), find)
+import Data.List.Extra (splitOn)
 import qualified Data.Map as M
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
-import Text.Parsec as P (char, digit, many1, newline, sepBy, sepEndBy, (<|>))
+import System.Process.Extra (StdStream (..), proc, readCreateProcess, std_in)
+import Text.Parsec as P (char, digit, many1, newline, sepBy, sepEndBy, string, (<|>))
 import Text.ParserCombinators.Parsec (Parser, parse)
 import Utils.BenchMark (runBenchMark)
 
@@ -41,6 +43,76 @@ data Line = Line
     _joltage :: Joltage
   }
   deriving (Show)
+
+-- part 2 is heavily inspired by https://github.com/apprenticewiz/adventofcode/blob/main/haskell/2025/day10b/src/Main.hs
+part2 :: IO Int
+part2 = do
+  input <- getInput
+  results <- traverse minPresses input
+  return $ sum results
+
+minPresses :: Line -> IO Int
+minPresses (Line _ buttons goals) = do
+  _ <- traverse print . splitOn ['\n'] $ statement
+  output <- readCreateProcess (proc "z3" ["-in"]) {std_in = CreatePipe} statement
+  _ <- traverse print . splitOn ['\n'] $ output
+  return . unsafeParse z3OutputParser $ output
+  where
+    statement = generateStatement goals buttons
+    -- an output looks like
+    --
+    -- "sat"
+    -- "(objectives"
+    -- " ((+ x0 x1 x2) 143)"
+    -- ")"
+    z3OutputParser :: Parser Int
+    z3OutputParser =
+      P.string "sat"
+        *> P.newline
+        *> P.string "(objectives"
+        *> P.newline
+        *> P.string " ((+ "
+        *> (P.char 'x' *> intParser) `P.sepBy` P.char ' '
+        *> P.string ") "
+        *> intParser
+        <* P.char ')'
+        <* P.newline
+        <* P.char ')'
+
+generateStatement :: Joltage -> [Button] -> String
+generateStatement joltage buttons =
+  unlines
+    [ "(set-logic LIA)",
+      "(set-option :produce-models true)",
+      unlines . map constDeclaration $ buttonNames,
+      unlines . map nonNegAssertion $ buttonNames,
+      unlines . zipWith joltageConstraint [0 ..] $ joltage,
+      "(minimize (+ " ++ unwords buttonNames ++ "))",
+      "(check-sat)",
+      "(get-objectives)",
+      "(exit)"
+    ]
+  where
+    buttonNames = map (("x" ++) . show) [0 .. length buttons - 1]
+
+    constDeclaration :: String -> String
+    constDeclaration buttonName = "(declare-const " ++ buttonName ++ " Int)"
+
+    nonNegAssertion :: String -> String
+    nonNegAssertion buttonName = "(assert (>= " ++ buttonName ++ " 0))"
+
+    joltageConstraint :: Int -> Int -> String
+    joltageConstraint i subJoltage = "(assert (= " ++ buildSum ++ " " ++ show subJoltage ++ "))"
+      where
+        -- I've perhaps obfuscated things a bit too much here
+        buildSum = "(+ " ++ unwords buildSum' ++ ")"
+        buildSum' =
+          map ((("x" ++) . show) . fst)
+            . filter (elem i . snd)
+            . zip [0 ..]
+            $ buttons
+
+----------------------------------------------------------------------------------
 
 part1 :: IO ()
 part1 = do
@@ -104,10 +176,10 @@ getInput = unsafeParse (lineParser `P.sepBy` P.newline) <$> readFile "./fixtures
     joltageParser :: Parser Joltage
     joltageParser = P.char '{' *> (intParser `P.sepBy` P.char ',') <* P.char '}'
 
-    intParser :: Parser Int
-    intParser = read <$> many1 digit
+intParser :: Parser Int
+intParser = read <$> many1 digit
 
-    unsafeParse :: Parser a -> String -> a
-    unsafeParse p s = case parse p "" s of
-      Left res -> error . show $ res
-      Right res -> res
+unsafeParse :: Parser a -> String -> a
+unsafeParse p s = case parse p "" s of
+  Left res -> error . show $ res
+  Right res -> res
